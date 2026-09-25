@@ -142,7 +142,7 @@ export default function ChatView() {
     return (
       <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-4rem)] items-center justify-center">
         <div className="w-6 h-6 border-2 border-memoir-200 border-t-memoir-500 rounded-full animate-spin mb-3" />
-        <p className="text-sm text-memoir-400">Loading messages from RAM...</p>
+        <p className="text-sm text-memoir-400">Loading messages...</p>
         <p className="text-xs text-emerald-600 mt-1">🔒 Privacy: memory-only • Images starrable</p>
       </div>
     );
@@ -158,8 +158,8 @@ export default function ChatView() {
         </button>
         <div className={cx('w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold', chat.avatarColor || 'bg-memoir-400')}>{chat.avatarLetter || '?'}</div>
         <div className="flex-1 min-w-0">
-          <h2 className="font-medium text-memoir-800 truncate flex items-center gap-1.5">{chat.contactName}<span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-200 px-1.5 py-0.5 rounded-full flex items-center gap-0.5"><Shield size={8} />RAM</span></h2>
-          <p className="text-xs text-memoir-400">{allMessages.length} msgs • {mediaMessages.length} media • {starredIds.size} starred</p>
+          <h2 className="font-medium text-memoir-800 truncate flex items-center gap-1.5">{chat.contactName}</h2>
+          <p className="text-xs text-memoir-400">{allMessages.length} messages  {mediaMessages.length} media  {starredIds.size} starred</p>
         </div>
         <div className="flex items-center bg-memoir-50 rounded-xl p-1">
           <button onClick={() => setActiveTab('chat')} className={cx('px-3 py-1.5 rounded-lg text-xs font-medium transition-all', activeTab === 'chat' ? 'bg-white text-memoir-700 shadow-sm' : 'text-memoir-400')}><MessagesSquare size={14} className="inline mr-1" />Chat</button>
@@ -170,7 +170,7 @@ export default function ChatView() {
       {activeTab === 'chat' && (
         <div className="px-4 py-2 bg-white/50 border-b border-memoir-100 flex items-center gap-2">
           <Search size={16} className="text-memoir-300" />
-          <input value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setVisibleCount(PAGE_SIZE); }} placeholder="Search conversation (RAM)..." className="flex-1 bg-transparent text-sm placeholder:text-memoir-300 focus:outline-none" />
+          <input value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setVisibleCount(PAGE_SIZE); }} placeholder="Search conversation..." className="flex-1 bg-transparent text-sm placeholder:text-memoir-300 focus:outline-none" />
           {searchQuery && <button onClick={() => setSearchQuery('')} className="text-xs text-memoir-400 hover:text-memoir-600">Clear</button>}
         </div>
       )}
@@ -203,7 +203,7 @@ export default function ChatView() {
                     </div>
                   )}
                   {msg.mediaUrl && imgErrors.has(msg.id) && (
-                    <div className="mb-2 p-2 bg-neutral-100 rounded-lg flex items-center gap-1.5 text-[11px] text-neutral-500"><ImageOff size={12} />Image expired (RAM only)</div>
+                    <div className="mb-2 p-2 bg-neutral-100 rounded-lg flex items-center gap-1.5 text-[11px] text-neutral-500"><ImageOff size={12} />Image unavailable</div>
                   )}
 
                   <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
@@ -224,12 +224,11 @@ export default function ChatView() {
             <Star size={16} className="text-blue-500 shrink-0 mt-0.5" />
             <div>
               <p className="text-xs font-medium text-blue-800">Star images to add to scrapbook</p>
-              <p className="text-[11px] text-blue-600 mt-0.5">Images live in RAM only. When you star an image, it converts to persistent dataURL (with your consent) so you can use it in scrapbooks. Unstarred images vanish on refresh for privacy.</p>
             </div>
           </div>
 
           {mediaMessages.length === 0 ? (
-            <div className="text-center py-12"><ImageIcon size={40} className="mx-auto text-memoir-200 mb-3" /><p className="text-memoir-400">No media found</p><p className="text-xs text-emerald-600 mt-1">Media lives in RAM only</p></div>
+            <div className="text-center py-12"><ImageIcon size={40} className="mx-auto text-memoir-200 mb-3" /><p className="text-memoir-400">No media found</p></div>
           ) : (
             <div className="grid grid-cols-3 gap-2">
               {mediaMessages.map((msg) => (

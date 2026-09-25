@@ -674,14 +674,13 @@ export default function Canvas() {
           <div className="text-center py-8">
             <MessageSquare size={28} className="mx-auto text-neutral-200 mb-2"/>
             <p className="text-sm text-neutral-400">No starred messages</p>
-            <p className="text-xs text-neutral-300 mt-1">Star messages from your chats first (memory only, privacy-safe)</p>
+            <p className="text-xs text-neutral-300 mt-1">Star messages from your chats first</p>
           </div>
         ) : (
           <div className="space-y-2">
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-2 mb-2">
-              <p className="text-[11px] text-blue-600">🔒 Privacy: chats live in RAM only, never saved to disk. Blob images expire on refresh.</p>
             </div>
-            <p className="text-xs text-neutral-400 mb-2">{starredMessages.length} starred • Tap to add</p>
+            <p className="text-xs text-neutral-400 mb-2">{starredMessages.length} starred</p>
             {starredMessages.map(msg => (
               <button key={msg.id} onClick={() => handleAddChatBubble(msg)} className="w-full text-left p-2.5 rounded-xl border border-neutral-100 hover:border-neutral-300 hover:bg-neutral-50 transition-all active:scale-[0.98]">
                 <div className="flex flex-col items-end">

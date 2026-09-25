@@ -36,7 +36,6 @@ export default function App() {
         <div className="text-center">
           <div className="text-4xl mb-4 animate-bounce">📖</div>
           <p className="text-memoir-400 font-medium">Loading Memoir v4...</p>
-          <p className="text-xs text-memoir-300 mt-1">Free • No login needed • Privacy-first</p>
         </div>
       </div>
     );
