@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #fdf8f0;
+    --bg-secondary: #ffffff;
+    --text-primary: #2a2a2a;
+    --text-secondary: #6b6b6b;
+    --accent: #d6832c;
+    --accent-light: #f9eddb;
+    --border: #e5ddd5;
+  }
+
+  .dark {
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #2a2a2a;
+    --text-primary: #f0f0f0;
+    --text-secondary: #a0a0a0;
+    --accent: #e9a04c;
+    --accent-light: #3a2a10;
+    --border: #3a3a3a;
+  }
+
+  body {
+    @apply font-body;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200;
+    @apply bg-memoir-500 text-white hover:bg-memoir-600 active:scale-95;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200;
+    @apply bg-memoir-100 text-memoir-700 hover:bg-memoir-200 active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 rounded-xl font-medium transition-all duration-200;
+    @apply bg-transparent text-memoir-600 hover:bg-memoir-50 active:scale-95;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-sm border border-memoir-100/50;
+    @apply transition-shadow duration-200 hover:shadow-md;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl border border-memoir-200;
+    @apply bg-white text-memoir-950 placeholder:text-memoir-300;
+    @apply focus:outline-none focus:ring-2 focus:ring-memoir-400 focus:border-transparent;
+    @apply transition-all duration-200;
+  }
+
+  .page-container {
+    @apply max-w-4xl mx-auto px-4 py-6;
+  }
+
+  .chat-bubble-mine {
+    @apply bg-memoir-500 text-white rounded-2xl rounded-br-sm;
+  }
+
+  .chat-bubble-other {
+    @apply bg-white text-memoir-900 rounded-2xl rounded-bl-sm border border-memoir-100;
+  }
+}
+
+/* Canvas element styles */
+.canvas-element {
+  position: absolute;
+  cursor: grab;
+  user-select: none;
+  transition: box-shadow 0.15s ease;
+}
+
+.canvas-element:hover {
+  box-shadow: 0 0 0 2px rgba(214, 131, 44, 0.4);
+}
+
+.canvas-element.selected {
+  box-shadow: 0 0 0 2px rgba(214, 131, 44, 0.8);
+}
+
+.canvas-element.dragging {
+  cursor: grabbing;
+  opacity: 0.9;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d4c8b8;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b8a898;
+}
+
+/* Page transition */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Sticky note styles */
+.sticky-note {
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+  font-family: 'Caveat', cursive;
+}
+
+/* Washi tape */
+.washi-tape {
+  opacity: 0.8;
+  mix-blend-mode: multiply;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease forwards;
+}
