@@ -462,6 +462,12 @@ export default function Canvas() {
 
   useEffect(() => { const onBeforeUnload = () => flushPersist(); window.addEventListener('beforeunload', onBeforeUnload); return () => window.removeEventListener('beforeunload', onBeforeUnload); }, [flushPersist]);
 
+  // Hooks must run in the same order on every render. Keep this above all early returns.
+  const selectedElement = useMemo(
+    () => elements.find(el => el.id === selectedId),
+    [elements, selectedId]
+  );
+
   if (loading) return (
     <div className="h-screen flex items-center justify-center bg-neutral-50">
       <div className="text-center">
@@ -492,7 +498,6 @@ export default function Canvas() {
     </div>
   );
 
-  const selectedElement = useMemo(() => elements.find(el => el.id === selectedId), [elements, selectedId]);
   const theme = THEMES[scrapbook.theme] || THEMES.cream;
 
   return (
