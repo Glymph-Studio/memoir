@@ -6,7 +6,7 @@ import {
   AlignLeft, AlignCenter, AlignRight, Trash2, RotateCw,
   ZoomIn, ZoomOut, Lock, Unlock, Copy,
   Layers, Calendar, Tag, MessageSquare,
-  Settings, AlertTriangle, ImageOff
+  Settings, AlertTriangle, ImageOff, Eye, Check
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
@@ -84,6 +84,10 @@ export default function Canvas() {
   const [saveStatus, setSaveStatus] = useState('saved');
   const [loadError, setLoadError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [viewport, setViewport] = useState(() => ({
+    width: typeof window === 'undefined' ? 390 : window.innerWidth,
+    height: typeof window === 'undefined' ? 844 : window.innerHeight,
+  }));
 
   const canvasRef = useRef();
   const workspaceRef = useRef();
@@ -93,6 +97,12 @@ export default function Canvas() {
   const maxZRef = useRef(1);
 
   const { pushHistory, undo: undoHistory, redo: redoHistory, canUndo, canRedo } = useCanvasHistory([], 50);
+
+  useEffect(() => {
+    const updateViewport = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', updateViewport);
+    return () => window.removeEventListener('resize', updateViewport);
+  }, []);
 
   // Robust load with retries
   useEffect(() => {
@@ -499,29 +509,40 @@ export default function Canvas() {
   );
 
   const theme = THEMES[scrapbook.theme] || THEMES.cream;
+  const isMobile = viewport.width < 768;
+  const canvasWidth = isMobile ? Math.max(320, viewport.width - 36) : 800;
+  const canvasHeight = isMobile ? Math.max(520, viewport.height - 168) : 600;
 
   return (
     <div className="h-[100dvh] flex flex-col bg-neutral-100 overflow-hidden select-none">
-      <div className="flex items-center justify-between px-2 py-1.5 bg-white border-b border-neutral-200 z-50 shrink-0">
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="p-2 rounded-lg hover:bg-neutral-100 active:scale-95 transition-all">
-            <ArrowLeft size={18} className="text-neutral-500" />
+      <header className="md:hidden h-[74px] px-4 bg-white border-b border-neutral-100 z-50 shrink-0 flex items-center justify-between">
+        <div className="flex items-center min-w-0">
+          <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="p-2 -ml-2 text-[#7b706a]" aria-label="Back">
+            <ArrowLeft size={22} />
           </button>
-          <div className="w-px h-5 bg-neutral-200" />
-          <h2 className="font-semibold text-neutral-800 text-sm truncate max-w-[140px]">{scrapbook.title}</h2>
-          <span className={cx('text-[10px] px-1.5 py-0.5 rounded-full ml-1', saveStatus === 'saved' ? 'bg-green-50 text-green-600' : saveStatus === 'saving' ? 'bg-amber-50 text-amber-600' : 'bg-neutral-100 text-neutral-500')}>
-            {saveStatus === 'saved' ? '● Saved' : saveStatus === 'saving' ? '○ Saving...' : '○ Unsaved'}
-          </span>
+          <h1 className="ml-2 font-display italic font-semibold text-[#34231c] truncate max-w-[150px]">{scrapbook.title}</h1>
+        </div>
+        <div className="flex items-center gap-1 text-[#8d827c]">
+          <button onClick={handleExport} className="p-2" aria-label="Download"><Download size={20} /></button>
+          <button onClick={() => setSelectedId(null)} className="p-2" aria-label="Preview"><Eye size={20} /></button>
+          <button onClick={() => setActivePanel(p => p === 'theme' ? null : 'theme')} className="p-2" aria-label="Theme"><Palette size={20} /></button>
+          <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="ml-1 h-10 px-4 rounded-full bg-[#4a2f24] text-white text-sm font-semibold flex items-center gap-1.5"><Check size={15} />Done</button>
+        </div>
+      </header>
+
+      <div className="hidden md:flex items-center justify-between px-2 py-1.5 bg-white border-b border-neutral-200 z-50 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="p-2 rounded-lg hover:bg-neutral-100"><ArrowLeft size={18} className="text-neutral-500" /></button>
+          <h2 className="font-semibold text-neutral-800 text-sm truncate max-w-[180px]">{scrapbook.title}</h2>
+          <span className="text-[10px] text-neutral-400">{saveStatus === 'saving' ? 'Saving...' : 'Saved'}</span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={undo} disabled={!canUndo} className="p-2 rounded-lg hover:bg-neutral-100 disabled:opacity-20 active:scale-95" title="Undo (Ctrl+Z)"><Undo size={16} className="text-neutral-500" /></button>
-          <button onClick={redo} disabled={!canRedo} className="p-2 rounded-lg hover:bg-neutral-100 disabled:opacity-20 active:scale-95" title="Redo (Ctrl+Y)"><Redo size={16} className="text-neutral-500" /></button>
-          <div className="w-px h-5 bg-neutral-200 mx-0.5" />
-          <button onClick={() => setZoom(z => Math.max(0.3, z - 0.15))} className="p-2 rounded-lg hover:bg-neutral-100 active:scale-95"><ZoomOut size={15} className="text-neutral-500" /></button>
-          <span className="text-[10px] text-neutral-400 w-9 text-center font-medium">{Math.round(zoom*100)}%</span>
-          <button onClick={() => setZoom(z => Math.min(2.5, z + 0.15))} className="p-2 rounded-lg hover:bg-neutral-100 active:scale-95"><ZoomIn size={15} className="text-neutral-500" /></button>
-          <div className="w-px h-5 bg-neutral-200 mx-0.5" />
-          <button onClick={handleExport} className="flex items-center gap-1 px-2.5 py-1.5 bg-neutral-900 text-white rounded-lg text-xs font-medium hover:bg-neutral-800 active:scale-95 transition-all"><Download size={13} /> Export</button>
+          <button onClick={undo} disabled={!canUndo} className="p-2 disabled:opacity-20"><Undo size={16} /></button>
+          <button onClick={redo} disabled={!canRedo} className="p-2 disabled:opacity-20"><Redo size={16} /></button>
+          <button onClick={() => setZoom(z => Math.max(0.3, z - 0.15))} className="p-2"><ZoomOut size={15} /></button>
+          <span className="text-[10px] text-neutral-400 w-9 text-center">{Math.round(zoom * 100)}%</span>
+          <button onClick={() => setZoom(z => Math.min(2.5, z + 0.15))} className="p-2"><ZoomIn size={15} /></button>
+          <button onClick={handleExport} className="flex items-center gap-1 px-3 py-2 bg-neutral-900 text-white rounded-lg text-xs"><Download size={13} />Export</button>
         </div>
       </div>
 
@@ -529,7 +550,7 @@ export default function Canvas() {
         <div className="hidden md:flex w-[56px] bg-white border-r border-neutral-200 flex-col items-center py-2 gap-0.5 shrink-0 z-40">
           <ToolBtn icon={<Type size={17}/>} label="Text" onClick={handleAddText} />
           <ToolBtn icon={<ImageIcon size={17}/>} label="Photo" onClick={handleAddImage} />
-          <ToolBtn icon={<MessageSquare size={17}/>} label="Chat" active={activePanel==='chatbubble'} onClick={()=>setActivePanel(p=>p==='chatbubble'?null:'chatbubble')} />
+          <ToolBtn icon={<MessageSquare size={17}/>} label="Moments" active={activePanel==='chatbubble'} onClick={()=>setActivePanel(p=>p==='chatbubble'?null:'chatbubble')} />
           <ToolBtn icon={<StickyNote size={17}/>} label="Notes" active={activePanel==='note'} onClick={()=>setActivePanel(p=>p==='note'?null:'note')} />
           <ToolBtn icon={<Smile size={17}/>} label="Sticker" active={activePanel==='sticker'} onClick={()=>setActivePanel(p=>p==='sticker'?null:'sticker')} />
           <ToolBtn icon={<Calendar size={17}/>} label="Date" onClick={handleAddDateStamp} />
@@ -538,8 +559,8 @@ export default function Canvas() {
           <ToolBtn icon={<Palette size={17}/>} label="Theme" active={activePanel==='theme'} onClick={()=>setActivePanel(p=>p==='theme'?null:'theme')} />
         </div>
 
-        <div className="flex-1 overflow-auto flex items-center justify-center p-3" ref={workspaceRef} onWheel={(e) => { if (e.ctrlKey||e.metaKey) { e.preventDefault(); setZoom(z=>Math.max(0.3,Math.min(2.5,z-e.deltaY*0.002))); }}} style={{ backgroundImage: 'radial-gradient(circle, #d4d4d4 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-          <div className="relative shadow-2xl ring-1 ring-black/5" style={{ width: 800, height: 600, backgroundColor: theme.bg, transform: `scale(${zoom})`, transformOrigin: 'center center', flexShrink: 0 }} ref={canvasRef} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const d=e.dataTransfer?.getData('application/memoir-image');if(d){const r=canvasRef.current.getBoundingClientRect();addElement({type:'image',src:d,x:(e.clientX-r.left)/zoom-100,y:(e.clientY-r.top)/zoom-100,w:200,h:200});}}} onPointerDown={handleCanvasPointerDown}>
+        <div className="flex-1 overflow-auto flex items-center justify-center px-[18px] pb-[92px] pt-0 md:p-3" ref={workspaceRef} onWheel={(e) => { if (!isMobile && (e.ctrlKey||e.metaKey)) { e.preventDefault(); setZoom(z=>Math.max(0.3,Math.min(2.5,z-e.deltaY*0.002))); }}} style={isMobile ? { backgroundColor: '#f8f6f3' } : { backgroundImage: 'radial-gradient(circle, #d4d4d4 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+          <div className="relative md:shadow-2xl md:ring-1 md:ring-black/5" style={{ width: canvasWidth, height: canvasHeight, backgroundColor: theme.bg, transform: isMobile ? 'none' : `scale(${zoom})`, transformOrigin: 'center center', flexShrink: 0 }} ref={canvasRef} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const d=e.dataTransfer?.getData('application/memoir-image');if(d){const r=canvasRef.current.getBoundingClientRect();addElement({type:'image',src:d,x:(e.clientX-r.left)/zoom-100,y:(e.clientY-r.top)/zoom-100,w:200,h:200});}}} onPointerDown={handleCanvasPointerDown}>
             <div className="absolute inset-0 pointer-events-none canvas-bg" style={{backgroundImage:`url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`}} />
             {elements.map(el => (
               <CanvasElement key={el.id} element={el} isSelected={selectedId === el.id} isEditing={editingId === el.id} onPointerDown={(e) => handleElementPointerDown(e, el.id)} onResizeStart={handleResizeStart} onRotateStart={handleRotateStart} onUpdate={(u) => updateElementImmediate(el.id, u)} onStopEditing={finishEditing} />
@@ -547,8 +568,8 @@ export default function Canvas() {
             {elements.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center opacity-30">
-                  <p className="text-lg font-medium">Empty canvas</p>
-                  <p className="text-sm">Add text, photos, stickers, or starred chats</p>
+                  <p className="text-xl italic font-display">Your canvas awaits...</p>
+                  <p className="text-sm mt-3">Tap Moments to place your starred messages</p>
                 </div>
               </div>
             )}
@@ -560,7 +581,7 @@ export default function Canvas() {
             <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 280, opacity: 1 }} exit={{ width: 0, opacity: 0 }} transition={{ duration: 0.15 }} className="hidden md:block bg-white border-l border-neutral-200 overflow-hidden shrink-0 z-40">
               <div className="w-[280px] h-full flex flex-col">
                 <div className="flex items-center justify-between px-3 py-2.5 border-b border-neutral-100">
-                  <h3 className="font-semibold text-neutral-700 text-sm capitalize">{activePanel === 'chatbubble' ? 'Chat Messages' : activePanel}</h3>
+                  <h3 className="font-semibold text-neutral-700 text-sm capitalize">{activePanel === 'chatbubble' ? 'Moments' : activePanel}</h3>
                   <button onClick={()=>setActivePanel(null)} className="p-1 rounded hover:bg-neutral-100"><X size={14} className="text-neutral-400"/></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-3">{renderPanelContent()}</div>
@@ -570,22 +591,22 @@ export default function Canvas() {
         </AnimatePresence>
       </div>
 
-      <div className="md:hidden flex items-center gap-0.5 px-1 py-1 bg-white border-t border-neutral-200 z-50 overflow-x-auto shrink-0">
-        <MobileTool icon={<Type size={16}/>} label="Text" onClick={handleAddText} />
-        <MobileTool icon={<ImageIcon size={16}/>} label="Photo" onClick={handleAddImage} />
-        <MobileTool icon={<MessageSquare size={16}/>} label="Chat" active={activePanel==='chatbubble'} onClick={()=>setActivePanel(p=>p==='chatbubble'?null:'chatbubble')} />
-        <MobileTool icon={<StickyNote size={16}/>} label="Note" active={activePanel==='note'} onClick={()=>setActivePanel(p=>p==='note'?null:'note')} />
-        <MobileTool icon={<Smile size={16}/>} label="Sticker" active={activePanel==='sticker'} onClick={()=>setActivePanel(p=>p==='sticker'?null:'sticker')} />
-        <MobileTool icon={<Calendar size={16}/>} label="Date" onClick={handleAddDateStamp} />
-        <MobileTool icon={<Tag size={16}/>} label="Washi" active={activePanel==='washi'} onClick={()=>setActivePanel(p=>p==='washi'?null:'washi')} />
-        <MobileTool icon={<Palette size={16}/>} label="Theme" active={activePanel==='theme'} onClick={()=>setActivePanel(p=>p==='theme'?null:'theme')} />
+      <div className="md:hidden fixed bottom-5 left-4 right-4 h-20 px-2 bg-white rounded-[20px] z-50 flex items-center justify-around shadow-[0_8px_28px_rgba(65,45,35,0.14)] border border-[#eee9e5]">
+        <MobileTool icon={<MessageSquare size={19}/>} label="Moments" active={activePanel==='chatbubble'} onClick={()=>setActivePanel(p=>p==='chatbubble'?null:'chatbubble')} />
+        <MobileTool icon={<ImageIcon size={19}/>} label="Photo" onClick={handleAddImage} />
+        <MobileTool icon={<Type size={19}/>} label="Text" onClick={handleAddText} />
+        <MobileTool icon={<StickyNote size={19}/>} label="Note" active={activePanel==='note'} onClick={()=>setActivePanel(p=>p==='note'?null:'note')} />
+        <MobileTool icon={<Smile size={19}/>} label="Sticker" active={activePanel==='sticker'} onClick={()=>setActivePanel(p=>p==='sticker'?null:'sticker')} />
+        <MobileTool icon={<Tag size={19}/>} label="Washi" active={activePanel==='washi'} onClick={()=>setActivePanel(p=>p==='washi'?null:'washi')} />
+        <MobileTool icon={<Calendar size={19}/>} label="Stamp" onClick={handleAddDateStamp} />
+        <MobileTool icon={<Undo size={19}/>} label="Undo" onClick={undo} />
       </div>
 
       <AnimatePresence>
         {activePanel && (
-          <motion.div initial={{ height: 0 }} animate={{ height: '45dvh' }} exit={{ height: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="md:hidden fixed bottom-[49px] left-0 right-0 bg-white border-t border-neutral-200 z-50 overflow-hidden">
+          <motion.div initial={{ height: 0 }} animate={{ height: '45dvh' }} exit={{ height: 0 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }} className="md:hidden fixed bottom-[108px] left-3 right-3 bg-white rounded-2xl border border-neutral-200 shadow-xl z-50 overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b border-neutral-100">
-              <h3 className="font-semibold text-neutral-700 text-sm capitalize">{activePanel === 'chatbubble' ? 'Chat Messages' : activePanel}</h3>
+              <h3 className="font-semibold text-neutral-700 text-sm capitalize">{activePanel === 'chatbubble' ? 'Moments' : activePanel}</h3>
               <button onClick={()=>setActivePanel(null)} className="p-1 rounded hover:bg-neutral-100"><X size={14} className="text-neutral-400"/></button>
             </div>
             <div className="overflow-y-auto p-3 h-[calc(100%-40px)]">{renderPanelContent()}</div>
@@ -595,7 +616,7 @@ export default function Canvas() {
 
       <AnimatePresence>
         {selectedElement && !activePanel && (
-          <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} className="fixed bottom-14 left-3 right-3 md:hidden bg-white rounded-2xl shadow-xl border border-neutral-200 z-50 p-3">
+          <motion.div initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }} className="fixed bottom-[108px] left-3 right-3 md:hidden bg-white rounded-2xl shadow-xl border border-neutral-200 z-50 p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-neutral-400 capitalize">{selectedElement.type}</span>
               <div className="flex items-center gap-1">

@@ -1,205 +1,143 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import {
-  getUsers, saveUsers, getCurrentUser, setCurrentUser, clearCurrentUser,
-  getUsersSync, getCurrentUserSync, saveUsersSync, setCurrentUserSync, clearCurrentUserSync,
-  generateId, getScrapbooks, saveScrapbooks
-} from '../lib/storage';
-import { hashPassword, verifyPassword, generateGuestId, sanitizeInput } from '../lib/crypto';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { deriveKey, generateGuestId, generateSalt, encrypt, sanitizeInput } from '../lib/crypto';
+import { requireSupabase, supabase } from '../lib/supabase';
+import { configureStorage, lockStorage, clearAllUserData } from '../lib/storage';
 
 const AuthContext = createContext(null);
+const emptyVault = JSON.stringify({ version: 1, chats: [], messages: {}, starred: [], scrapbooks: [], updatedAt: new Date().toISOString() });
+
+function makeGuest() {
+  return { id: generateGuestId(), email: '', name: 'Guest', isGuest: true };
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [cryptoKey, setCryptoKey] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const init = async () => {
-      // Fast sync boot
-      const saved = getCurrentUserSync();
-      if (saved) {
-        setUser(saved);
+    let active = true;
+    const boot = async () => {
+      // The AES key is intentionally not restored from browser storage.
+      // A remembered Supabase session still requires the encryption password again.
+      const guest = makeGuest();
+      await configureStorage(guest.id, null);
+      if (active) {
+        setUser(guest);
         setLoading(false);
-        return;
       }
-      // Check async IDB
-      try {
-        const asyncUser = await getCurrentUser();
-        if (asyncUser) {
-          setUser(asyncUser);
-          setCurrentUserSync(asyncUser);
-          setLoading(false);
-          return;
-        }
-      } catch {}
-
-      // No user -> create guest (free use, no login required)
-      const guest = {
-        id: generateGuestId(),
-        email: 'guest@local',
-        name: 'Guest',
-        isGuest: true,
-        createdAt: new Date().toISOString(),
-      };
-      try {
-        await setCurrentUser(guest);
-        setCurrentUserSync(guest);
-      } catch {}
-      setUser(guest);
-      setLoading(false);
     };
-    init();
+    boot();
+    return () => { active = false; };
   }, []);
 
   const login = async (email, password) => {
-    const users = await getUsers();
-    const found = users.find(u => u.email === email);
-    if (!found) throw new Error('Invalid email or password');
+    const client = requireSupabase();
+    const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
+    if (authError) throw authError;
+    const authUser = authData.user;
 
-    // Handle old plaintext passwords (migration)
-    if (found.password && !found.passwordHash) {
-      if (found.password !== password) throw new Error('Invalid email or password');
-      // Migrate to hashed
-      const { hash, salt } = await hashPassword(password);
-      found.passwordHash = hash;
-      found.salt = salt;
-      delete found.password; // Remove plaintext
-      await saveUsers(users);
-      saveUsersSync(users);
-    } else {
-      // Verify hashed
-      const valid = await verifyPassword(password, found.passwordHash, found.salt);
-      if (!valid) throw new Error('Invalid email or password');
+    const { data: row, error: rowError } = await client
+      .from('user_data')
+      .select('salt')
+      .eq('user_id', authUser.id)
+      .maybeSingle();
+    if (rowError) throw rowError;
+
+    const salt = row?.salt || authUser.user_metadata?.encryption_salt;
+    if (!salt) throw new Error('Encryption salt is missing. This account cannot be decrypted.');
+    const key = await deriveKey(password, salt);
+
+    if (!row) {
+      const encryptedBlob = await encrypt(key, emptyVault);
+      const { error } = await client.from('user_data').insert({ user_id: authUser.id, salt, encrypted_blob: encryptedBlob });
+      if (error) throw error;
     }
 
-    // Migrate guest scrapbooks to this user if guest existed
-    const current = getCurrentUserSync();
-    if (current?.isGuest) {
-      try {
-        const guestBooks = await getScrapbooks(current.id);
-        if (guestBooks.length > 0) {
-          const existingBooks = await getScrapbooks(found.id);
-          const merged = [...guestBooks, ...existingBooks];
-          await saveScrapbooks(found.id, merged);
-          console.log(`[Auth] Migrated ${guestBooks.length} scrapbooks from guest to ${found.id}`);
-        }
-      } catch (e) { console.warn('Guest migration failed', e); }
+    try {
+      await configureStorage(authUser.id, key);
+    } catch (error) {
+      await client.auth.signOut();
+      throw new Error('Could not decrypt your data. Check your password or encryption setup.');
     }
 
-    const userData = { id: found.id, email: found.email, name: found.name, isGuest: false };
-    await setCurrentUser(userData);
-    setCurrentUserSync(userData);
-    setUser(userData);
-    return userData;
+    const appUser = {
+      id: authUser.id,
+      email: authUser.email,
+      name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || 'User',
+      isGuest: false,
+    };
+    setCryptoKey(key);
+    setUser(appUser);
+    return appUser;
   };
 
   const register = async (name, email, password) => {
+    const client = requireSupabase();
     const cleanName = sanitizeInput(name);
-    if (cleanName.length < 2) throw new Error('Name too short');
-    if (password.length < 6) throw new Error('Password must be at least 6 characters');
+    if (cleanName.length < 2) throw new Error('Name must have at least 2 characters');
+    if (password.length < 8) throw new Error('Password must have at least 8 characters');
 
-    const users = await getUsers();
-    if (users.find(u => u.email === email)) throw new Error('Email already registered');
-
-    const { hash, salt } = await hashPassword(password);
-    const newUser = { 
-      id: generateId(), 
-      name: cleanName, 
-      email, 
-      passwordHash: hash, 
-      salt,
-      createdAt: new Date().toISOString()
-    };
-    const updated = [...users, newUser];
-    await saveUsers(updated);
-    saveUsersSync(updated);
-
-    // Migrate guest scrapbooks
-    const current = getCurrentUserSync();
-    if (current?.isGuest) {
-      try {
-        const guestBooks = await getScrapbooks(current.id);
-        if (guestBooks.length > 0) {
-          await saveScrapbooks(newUser.id, guestBooks);
-        }
-      } catch {}
+    const salt = generateSalt();
+    const key = await deriveKey(password, salt);
+    const { data: authData, error: authError } = await client.auth.signUp({
+      email,
+      password,
+      options: { data: { name: cleanName, encryption_salt: salt } },
+    });
+    if (authError) throw authError;
+    if (!authData.session) {
+      throw new Error('Check your email to confirm the account, then sign in.');
     }
 
-    const userData = { id: newUser.id, email: newUser.email, name: newUser.name, isGuest: false };
-    await setCurrentUser(userData);
-    setCurrentUserSync(userData);
-    setUser(userData);
-    return userData;
+    const encryptedBlob = await encrypt(key, emptyVault);
+    const { error: insertError } = await client.from('user_data').insert({
+      user_id: authData.user.id,
+      salt,
+      encrypted_blob: encryptedBlob,
+    });
+    if (insertError) throw insertError;
+
+    await configureStorage(authData.user.id, key);
+    const appUser = { id: authData.user.id, email, name: cleanName, isGuest: false };
+    setCryptoKey(key);
+    setUser(appUser);
+    return appUser;
   };
 
   const logout = async () => {
-    // For guest, just create new guest (don't clear scrapbooks)
-    // For real user, clear current but keep users DB
-    const current = getCurrentUserSync();
-    if (current?.isGuest) {
-      // Guest logout = new guest
-      const newGuest = {
-        id: generateGuestId(),
-        email: 'guest@local',
-        name: 'Guest',
-        isGuest: true,
-        createdAt: new Date().toISOString(),
-      };
-      await setCurrentUser(newGuest);
-      setCurrentUserSync(newGuest);
-      setUser(newGuest);
-    } else {
-      await clearCurrentUser();
-      clearCurrentUserSync();
-      // Auto-create guest after logout so app still usable
-      const guest = {
-        id: generateGuestId(),
-        email: 'guest@local',
-        name: 'Guest',
-        isGuest: true,
-        createdAt: new Date().toISOString(),
-      };
-      await setCurrentUser(guest);
-      setCurrentUserSync(guest);
-      setUser(guest);
-    }
+    const previousId = user?.id;
+    setCryptoKey(null);
+    lockStorage();
+    if (previousId) await clearAllUserData(previousId);
+    if (supabase) await supabase.auth.signOut();
+    const guest = makeGuest();
+    await configureStorage(guest.id, null);
+    setUser(guest);
   };
 
-  const resetPassword = async (email, newPassword) => {
-    if (newPassword.length < 6) throw new Error('Password must be at least 6 characters');
-    const users = await getUsers();
-    const idx = users.findIndex(u => u.email === email);
-    if (idx === -1) throw new Error('Email not found');
-    const { hash, salt } = await hashPassword(newPassword);
-    users[idx].passwordHash = hash;
-    users[idx].salt = salt;
-    delete users[idx].password;
-    await saveUsers(users);
-    saveUsersSync(users);
+  const resetPassword = async () => {
+    throw new Error('Encrypted data cannot be recovered by changing only the account password. Recovery phrase support is required.');
   };
 
   const continueAsGuest = async () => {
-    const guest = {
-      id: generateGuestId(),
-      email: 'guest@local',
-      name: 'Guest',
-      isGuest: true,
-      createdAt: new Date().toISOString(),
-    };
-    await setCurrentUser(guest);
-    setCurrentUserSync(guest);
+    setCryptoKey(null);
+    lockStorage();
+    const guest = makeGuest();
+    await configureStorage(guest.id, null);
     setUser(guest);
     return guest;
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, resetPassword, continueAsGuest }}>
+    <AuthContext.Provider value={{ user, cryptoKey, login, register, logout, resetPassword, continueAsGuest, loading }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+  const value = useContext(AuthContext);
+  if (!value) throw new Error('useAuth must be used inside AuthProvider');
+  return value;
 }

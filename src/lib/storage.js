@@ -1,210 +1,201 @@
-/* ============================================
-   Memoir — Storage v3 (Privacy-First)
-   - Chats/Messages/Starred = MEMORY ONLY (never touches disk)
-   - Scrapbooks/Users = IndexedDB (user-created, local only)
-   - No WhatsApp data ever persisted for privacy
-   ============================================ */
+import { idbGet, idbSet, idbGetFile, idbSetFile, clearUserCache, clearAllIDB } from './idb';
+import { encrypt, decrypt } from './crypto';
+import { supabase } from './supabase';
 
-import { idbGet, idbSet, idbRemove, idbGetFile, idbSetFile, getLocalStorageSnapshot } from './idb';
-import { 
-  memGetChats, memSaveChats, 
-  memGetMessages, memSaveMessages,
-  memGetStarred, memSaveStarred,
-  memClearUser, memClearAll, memAddBlobUrl, memRevokeAll
-} from './memoryStore';
+const EMPTY_VAULT = () => ({
+  version: 1,
+  chats: [],
+  messages: {},
+  starred: [],
+  scrapbooks: [],
+  updatedAt: new Date(0).toISOString(),
+});
 
-const PREFIX = 'memoir_';
+let activeUserId = null;
+let activeKey = null;
+let vault = EMPTY_VAULT();
+let readyPromise = Promise.resolve();
+let writeQueue = Promise.resolve();
 
-// Migration - only for scrapbooks/users, NOT chats (privacy)
-let migrated = false;
-async function ensureMigrated() {
-  if (migrated) return;
-  migrated = true;
-  try {
-    const already = await idbGet('__migrated_v3');
-    if (already) return;
-    const snapshot = getLocalStorageSnapshot();
-    // Only migrate scrapbooks and users, NOT chats/messages
-    for (const [fullKey, value] of Object.entries(snapshot)) {
-      const shortKey = fullKey.replace(PREFIX, '');
-      if (shortKey.startsWith('chats_') || shortKey.startsWith('messages_') || shortKey.startsWith('starred_') || shortKey.startsWith('file_')) {
-        // Skip - privacy, don't migrate chat data
-        continue;
-      }
-      if (shortKey === 'users' || shortKey.startsWith('scrapbooks_') || shortKey === 'currentUser') {
-        await idbSet(shortKey, value);
-      }
+const cacheKey = userId => `vault:${userId}`;
+const isGuest = userId => String(userId || '').startsWith('guest_');
+
+function safeVault(value) {
+  return {
+    ...EMPTY_VAULT(),
+    ...(value && typeof value === 'object' ? value : {}),
+    chats: Array.isArray(value?.chats) ? value.chats : [],
+    messages: value?.messages && typeof value.messages === 'object' ? value.messages : {},
+    starred: Array.isArray(value?.starred) ? value.starred : [],
+    scrapbooks: Array.isArray(value?.scrapbooks) ? value.scrapbooks : [],
+  };
+}
+
+async function fetchRemoteVault(userId, key) {
+  if (!supabase || !key || isGuest(userId)) return null;
+  const { data, error } = await supabase
+    .from('user_data')
+    .select('encrypted_blob, updated_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.encrypted_blob) return null;
+  const parsed = JSON.parse(await decrypt(key, data.encrypted_blob));
+  return safeVault({ ...parsed, updatedAt: data.updated_at || parsed.updatedAt });
+}
+
+async function hydrate(userId, key) {
+  const cached = safeVault(await idbGet(cacheKey(userId)));
+  vault = cached;
+  if (!isGuest(userId) && key) {
+    const remote = await fetchRemoteVault(userId, key);
+    if (remote) {
+      vault = remote;
+      await idbSet(cacheKey(userId), vault);
     }
-    await idbSet('__migrated_v3', true);
-    // Clear old chat data from localStorage for privacy
-    try {
-      for (const k of Object.keys(localStorage)) {
-        if (k.startsWith(PREFIX + 'chats_') || k.startsWith(PREFIX + 'messages_') || k.startsWith(PREFIX + 'starred_') || k.startsWith(PREFIX + 'file_')) {
-          localStorage.removeItem(k);
-        }
-      }
-    } catch {}
-  } catch (e) {
-    console.warn('Migration v3 failed', e);
+  }
+  return vault;
+}
+
+export async function configureStorage(userId, cryptoKey) {
+  activeUserId = userId;
+  activeKey = cryptoKey || null;
+  readyPromise = hydrate(userId, cryptoKey);
+  await readyPromise;
+}
+
+export function lockStorage() {
+  activeUserId = null;
+  activeKey = null;
+  vault = EMPTY_VAULT();
+  readyPromise = Promise.resolve();
+}
+
+async function ensureReady(userId) {
+  if (!activeUserId || activeUserId !== userId) {
+    await configureStorage(userId, null);
+  } else {
+    await readyPromise;
   }
 }
 
-// Generic IDB helpers (for scrapbooks/users only)
-export async function getItem(key) {
-  await ensureMigrated();
-  try {
-    const v = await idbGet(key);
-    if (v !== null && v !== undefined) return v;
-  } catch {}
-  try {
-    const raw = localStorage.getItem(PREFIX + key);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-
-export async function setItem(key, value) {
-  await ensureMigrated();
-  try {
-    await idbSet(key, value);
-    try {
-      const str = JSON.stringify(value);
-      if (str.length < 500000) localStorage.setItem(PREFIX + key, str);
-    } catch {}
-    return true;
-  } catch {
-    try { localStorage.setItem(PREFIX + key, JSON.stringify(value)); return true; } catch { return false; }
+async function persist() {
+  if (!activeUserId) throw new Error('No active user');
+  vault.updatedAt = new Date().toISOString();
+  await idbSet(cacheKey(activeUserId), vault);
+  if (!isGuest(activeUserId)) {
+    if (!activeKey) throw new Error('Please sign in again to sync encrypted data');
+    const encryptedBlob = await encrypt(activeKey, JSON.stringify(vault));
+    const { error } = await supabase.from('user_data').upsert({
+      user_id: activeUserId,
+      encrypted_blob: encryptedBlob,
+      updated_at: vault.updatedAt,
+    }, { onConflict: 'user_id' });
+    if (error) throw error;
   }
 }
 
-export async function removeItem(key) {
-  await ensureMigrated();
-  try { await idbRemove(key); } catch {}
-  try { localStorage.removeItem(PREFIX + key); } catch {}
+function queuePersist() {
+  writeQueue = writeQueue.then(persist, persist);
+  return writeQueue;
 }
 
-// Sync variants for boot
-export function getItemSync(key) {
-  try { const raw = localStorage.getItem(PREFIX + key); return raw ? JSON.parse(raw) : null; } catch { return null; }
-}
-
-// ---- Auth (IDB, local only) ----
-export async function getUsers() { return (await getItem('users')) || []; }
-export async function saveUsers(users) { return await setItem('users', users); }
-export async function getCurrentUser() { return await getItem('currentUser'); }
-export async function setCurrentUser(user) { return await setItem('currentUser', user); }
-export async function clearCurrentUser() { return await removeItem('currentUser'); }
-
-export function getCurrentUserSync() { return getItemSync('currentUser'); }
-export function getUsersSync() { return getItemSync('users') || []; }
-export function saveUsersSync(users) { try { localStorage.setItem(PREFIX + 'users', JSON.stringify(users)); } catch {} idbSet('users', users).catch(()=>{}); }
-export function setCurrentUserSync(user) { try { localStorage.setItem(PREFIX + 'currentUser', JSON.stringify(user)); } catch {} idbSet('currentUser', user).catch(()=>{}); }
-export function clearCurrentUserSync() { try { localStorage.removeItem(PREFIX + 'currentUser'); } catch {} idbRemove('currentUser').catch(()=>{}); }
-
-// ---- Chats (MEMORY ONLY - Privacy) ----
 export async function getChats(userId) {
-  await ensureMigrated();
-  return memGetChats(userId);
+  await ensureReady(userId);
+  return vault.chats;
 }
+
 export async function saveChats(userId, chats) {
-  memSaveChats(userId, chats);
-  return true;
+  await ensureReady(userId);
+  vault.chats = chats;
+  return queuePersist();
 }
 
-// ---- Messages (MEMORY ONLY) ----
 export async function getMessages(userId, chatId) {
-  return memGetMessages(userId, chatId);
+  await ensureReady(userId);
+  const messages = vault.messages[chatId] || [];
+  return Promise.all(messages.map(async message => {
+    if (!message.mediaKey || (message.mediaUrl && !message.mediaUrl.startsWith('blob:'))) return message;
+    const blob = await getFile(message.mediaKey);
+    return blob ? { ...message, mediaUrl: URL.createObjectURL(blob) } : message;
+  }));
 }
+
 export async function saveMessages(userId, chatId, messages) {
-  // Track blob URLs for revocation
-  for (const m of messages) {
-    if (m.mediaUrl && m.mediaUrl.startsWith('blob:')) {
-      memAddBlobUrl(m.mediaUrl, true);
+  await ensureReady(userId);
+  const serializable = messages.map(message => {
+    if (message.mediaUrl?.startsWith('blob:')) {
+      const { mediaUrl, ...rest } = message;
+      return rest;
     }
-  }
-  memSaveMessages(userId, chatId, messages);
-  return true;
+    return message;
+  });
+  vault.messages = { ...vault.messages, [chatId]: serializable };
+  return queuePersist();
 }
 
-// ---- Starred (MEMORY ONLY) ----
+export async function searchAllMessages(userId, query) {
+  await ensureReady(userId);
+  const term = String(query || '').trim().toLowerCase();
+  if (!term) return [];
+  const results = [];
+  for (const chat of vault.chats) {
+    const messages = vault.messages[chat.id] || [];
+    for (const message of messages) {
+      const haystack = `${message.sender || ''} ${message.content || ''}`.toLowerCase();
+      if (haystack.includes(term)) results.push({ ...message, chatId: chat.id, contactName: chat.contactName });
+      if (results.length >= 100) return results;
+    }
+  }
+  return results;
+}
+
 export async function getStarredMessages(userId) {
-  return memGetStarred(userId);
+  await ensureReady(userId);
+  return vault.starred;
 }
+
 export async function saveStarredMessages(userId, messages) {
-  memSaveStarred(userId, messages);
-  return true;
+  await ensureReady(userId);
+  vault.starred = messages;
+  return queuePersist();
 }
 
-// ---- Scrapbooks (IDB - user created, local only) ----
 export async function getScrapbooks(userId) {
-  await ensureMigrated();
-  const data = await getItem(`scrapbooks_${userId}`);
-  // Debug log to catch empty case
-  if (!data) {
-    console.log('[Storage] No scrapbooks found for', userId);
-    return [];
-  }
-  return data;
-}
-export async function saveScrapbooks(userId, scrapbooks) {
-  console.log('[Storage] Saving', scrapbooks.length, 'scrapbooks for', userId);
-  return await setItem(`scrapbooks_${userId}`, scrapbooks);
+  await ensureReady(userId);
+  return vault.scrapbooks;
 }
 
-// ---- File storage (IDB, but only for scrapbook images user explicitly adds) ----
-export async function saveFile(key, dataUrl) {
-  await ensureMigrated();
-  try {
-    // Compress dataUrl if too large (>1MB)
-    if (dataUrl && dataUrl.length > 1024 * 1024) {
-      console.warn('[Storage] Large file, compressing', key, dataUrl.length);
-      // Will be compressed by caller, but save anyway
-    }
-    await idbSetFile(key, dataUrl);
-    return key;
-  } catch (e) {
-    console.warn('IDB file save failed', e);
-    return null;
-  }
+export async function saveScrapbooks(userId, scrapbooks) {
+  await ensureReady(userId);
+  vault.scrapbooks = scrapbooks;
+  return queuePersist();
+}
+
+export async function saveFile(key, data) {
+  return idbSetFile(`${activeUserId}:${key}`, data);
 }
 
 export async function getFile(key) {
-  await ensureMigrated();
-  try { const data = await idbGetFile(key); if (data) return data; } catch {}
-  return null;
+  return idbGetFile(`${activeUserId}:${key}`);
 }
 
-export function getFileSync(key) { return null; }
+export function getFileSync() { return null; }
 
-export function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-}
-
-export async function getStorageStats() {
-  await ensureMigrated();
-  let lsSize = 0;
-  try {
-    for (let i=0;i<localStorage.length;i++){
-      const k=localStorage.key(i);
-      if(k?.startsWith(PREFIX)) lsSize+=(localStorage.getItem(k)?.length||0);
-    }
-  } catch {}
-  return { lsSizeKB: Math.round(lsSize/1024), mode: 'privacy-memory', chatsInMemory: true };
-}
-
-// Privacy helpers
 export async function clearAllUserData(userId) {
-  memClearUser(userId);
-  // Keep scrapbooks? For privacy, option to clear them too
-  try { sessionStorage.clear(); } catch {}
-  memRevokeAll();
+  await clearUserCache(userId);
+  if (activeUserId === userId) lockStorage();
 }
 
 export async function clearAllData() {
-  memClearAll();
-  try {
-    const { clearAllIDB } = await import('./idb');
-    await clearAllIDB();
-    localStorage.clear();
-    sessionStorage.clear();
-  } catch {}
+  lockStorage();
+  await clearAllIDB();
+}
+
+export function generateId() {
+  return `${Date.now().toString(36)}${crypto.getRandomValues(new Uint32Array(1))[0].toString(36)}`;
+}
+
+export async function getStorageStats() {
+  return { encrypted: Boolean(activeKey), synced: Boolean(activeKey && !isGuest(activeUserId)) };
 }

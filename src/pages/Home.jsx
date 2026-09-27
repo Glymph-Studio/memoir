@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Upload, Search, Trash2, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getChats, saveChats, saveMessages, generateId } from '../lib/storage';
+import { getChats, saveChats, saveMessages, saveFile, searchAllMessages, generateId } from '../lib/storage';
 import { processChatFile, determineMyMessages } from '../lib/whatsapp-parser';
 import { getAvatarColor, getAvatarLetter, truncate, cx } from '../lib/utils';
 
@@ -16,6 +16,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
+  const [messageResults, setMessageResults] = useState([]);
 
   useEffect(() => {
     let mounted = true;
@@ -26,7 +27,23 @@ export default function Home() {
     return () => { mounted = false; };
   }, [user.id]);
 
-  const filteredChats = chats.filter(c => c.contactName.toLowerCase().includes(search.toLowerCase()));
+  useEffect(() => {
+    let active = true;
+    const timer = setTimeout(async () => {
+      if (!search.trim()) {
+        if (active) setMessageResults([]);
+        return;
+      }
+      const results = await searchAllMessages(user.id, search);
+      if (active) setMessageResults(results);
+    }, 180);
+    return () => { active = false; clearTimeout(timer); };
+  }, [search, user.id]);
+
+  const messageChatIds = new Set(messageResults.map(result => result.chatId));
+  const filteredChats = chats.filter(chat =>
+    chat.contactName.toLowerCase().includes(search.toLowerCase()) || messageChatIds.has(chat.id)
+  );
 
   const handleImport = async (e) => {
     const file = e.target.files?.[0];
@@ -56,6 +73,17 @@ export default function Home() {
         hasMedia: Object.keys(result.mediaFiles || {}).length > 0,
         mediaCount: Object.keys(result.mediaFiles || {}).length,
       };
+
+      const blobsByUrl = new Map(
+        Object.values(result.mediaBlobs || {}).map(item => [item.url, item.blob])
+      );
+      for (const message of messages) {
+        const blob = blobsByUrl.get(message.mediaUrl);
+        if (blob) {
+          message.mediaKey = `media:${chatId}:${message.id}`;
+          await saveFile(message.mediaKey, blob);
+        }
+      }
 
       const updatedChats = [newChat, ...chats];
       setChats(updatedChats);
@@ -138,17 +166,25 @@ export default function Home() {
         </div>
       )}
 
+      {search.trim() && messageResults.length > 0 && (
+        <section className="mb-6">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-memoir-400 mb-2">Messages</h2>
+          <div className="space-y-2">
+            {messageResults.slice(0, 8).map(result => (
+              <button key={`${result.chatId}:${result.id}`} onClick={() => navigate(`/chat/${result.chatId}`)} className="card w-full p-3 text-left">
+                <p className="text-xs font-medium text-memoir-600">{result.contactName}</p>
+                <p className="text-sm text-memoir-800 truncate mt-1">{result.content}</p>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
       {filteredChats.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">💬</div>
           <h3 className="text-lg font-medium text-memoir-600 mb-2">{chats.length === 0 ? 'No chats yet' : 'No matching chats'}</h3>
           <p className="text-memoir-400 text-sm mb-2 max-w-md mx-auto">{chats.length === 0 ? 'Import a WhatsApp conversation or start with the demo.' : 'Try a different search.'}</p>
-          {chats.length === 0 && (
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-              <button onClick={() => fileRef.current?.click()} className="btn-primary"><Upload size={18} className="inline mr-2" />Import Chat</button>
-              <button onClick={createDemoChat} className="btn-secondary"><Sparkles size={18} className="inline mr-2" />Try Demo Chat</button>
-            </div>
-          )}
         </div>
       ) : (
         <div className="space-y-2">
