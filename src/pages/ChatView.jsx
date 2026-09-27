@@ -1,11 +1,16 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Star, Image as ImageIcon, MessagesSquare, Search, Shield, ImageOff, StarOff } from 'lucide-react';
+import { ArrowLeft, Star, Search, ChevronUp, ChevronDown, X, Image as ImageIcon, ImageOff, StarOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getChats, getMessages, getStarredMessages, saveStarredMessages, generateId } from '../lib/storage';
 import { formatMessageTime, cx } from '../lib/utils';
 
 const PAGE_SIZE = 80;
+
+function openMedia(url) {
+  const popup = window.open(url, '_blank', 'noopener,noreferrer');
+  if (popup) popup.opener = null;
+}
 
 // Helper: blob URL -> dataURL for persistent starring
 async function blobToDataURL(blobUrl) {
@@ -29,14 +34,15 @@ export default function ChatView() {
   const { user } = useAuth();
   const messagesEndRef = useRef();
   const listRef = useRef();
+  const messageRefs = useRef(new Map());
 
   const [chat, setChat] = useState(null);
   const [allMessages, setAllMessages] = useState([]);
   const [starredMessages, setStarredMessages] = useState([]);
-  const [activeTab, setActiveTab] = useState('chat');
   const [starredIds, setStarredIds] = useState(new Set());
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeMatch, setActiveMatch] = useState(0);
   const [loading, setLoading] = useState(true);
   const [imgErrors, setImgErrors] = useState(new Set());
   const [starring, setStarring] = useState(null);
@@ -71,26 +77,54 @@ export default function ChatView() {
     return () => { mounted = false; };
   }, [chatId, user.id, navigate]);
 
-  const filteredMessages = useMemo(() => {
-    if (!searchQuery.trim()) return allMessages;
-    const q = searchQuery.toLowerCase();
-    return allMessages.filter(m => m.content.toLowerCase().includes(q) || m.sender.toLowerCase().includes(q));
+  const searchMatches = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return [];
+    return allMessages
+      .map((message, index) => ({ message, index }))
+      .filter(({ message }) => String(message.content || '').toLowerCase().includes(query));
   }, [allMessages, searchQuery]);
 
+  useEffect(() => {
+    setActiveMatch(searchMatches.length ? searchMatches.length - 1 : 0);
+  }, [searchQuery, searchMatches.length]);
+
+  const targetIndex = searchMatches[activeMatch]?.index;
   const visibleMessages = useMemo(() => {
-    if (filteredMessages.length <= visibleCount) return filteredMessages;
-    if (searchQuery) return filteredMessages.slice(0, visibleCount);
-    return filteredMessages.slice(-visibleCount);
-  }, [filteredMessages, visibleCount, searchQuery]);
-
-  const hasMore = filteredMessages.length > visibleMessages.length;
-
-  const handleScroll = useCallback((e) => {
-    const el = e.target;
-    if (el.scrollTop < 100 && hasMore) {
-      setVisibleCount(c => Math.min(c + PAGE_SIZE, filteredMessages.length));
+    if (searchQuery.trim() && Number.isInteger(targetIndex)) {
+      const start = Math.max(0, targetIndex - 12);
+      const end = Math.min(allMessages.length, targetIndex + 13);
+      return allMessages.slice(start, end);
     }
-  }, [hasMore, filteredMessages.length]);
+    return allMessages.slice(-visibleCount);
+  }, [allMessages, visibleCount, searchQuery, targetIndex]);
+
+  const hasMore = !searchQuery.trim() && allMessages.length > visibleMessages.length;
+
+  useEffect(() => {
+    if (!searchQuery.trim() || !Number.isInteger(targetIndex)) return;
+    requestAnimationFrame(() => {
+      messageRefs.current.get(allMessages[targetIndex]?.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [targetIndex, searchQuery, allMessages]);
+
+  const handleScroll = useCallback((event) => {
+    if (event.currentTarget.scrollTop < 100 && hasMore) {
+      setVisibleCount(count => Math.min(count + PAGE_SIZE, allMessages.length));
+    }
+  }, [hasMore, allMessages.length]);
+
+  const moveMatch = (direction) => {
+    if (!searchMatches.length) return;
+    setActiveMatch(current => (current + direction + searchMatches.length) % searchMatches.length);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setActiveMatch(0);
+    setVisibleCount(PAGE_SIZE);
+    requestAnimationFrame(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }));
+  };
 
   const toggleStar = async (msg) => {
     setStarring(msg.id);
@@ -159,40 +193,45 @@ export default function ChatView() {
         <div className={cx('w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold', chat.avatarColor || 'bg-memoir-400')}>{chat.avatarLetter || '?'}</div>
         <div className="flex-1 min-w-0">
           <h2 className="font-medium text-memoir-800 truncate flex items-center gap-1.5">{chat.contactName}</h2>
-          <p className="text-xs text-memoir-400">{allMessages.length} messages  {mediaMessages.length} media  {starredIds.size} starred</p>
-        </div>
-        <div className="flex items-center bg-memoir-50 rounded-xl p-1">
-          <button onClick={() => setActiveTab('chat')} className={cx('px-3 py-1.5 rounded-lg text-xs font-medium transition-all', activeTab === 'chat' ? 'bg-white text-memoir-700 shadow-sm' : 'text-memoir-400')}><MessagesSquare size={14} className="inline mr-1" />Chat</button>
-          <button onClick={() => setActiveTab('media')} className={cx('px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1', activeTab === 'media' ? 'bg-white text-memoir-700 shadow-sm' : 'text-memoir-400')}><ImageIcon size={14} />Media ({mediaMessages.length})</button>
+          <p className="text-xs text-memoir-400">{allMessages.length} messages  {starredIds.size} starred</p>
         </div>
       </div>
 
-      {activeTab === 'chat' && (
-        <div className="px-4 py-2 bg-white/50 border-b border-memoir-100 flex items-center gap-2">
-          <Search size={16} className="text-memoir-300" />
-          <input value={searchQuery} onChange={e => { setSearchQuery(e.target.value); setVisibleCount(PAGE_SIZE); }} placeholder="Search conversation..." className="flex-1 bg-transparent text-sm placeholder:text-memoir-300 focus:outline-none" />
-          {searchQuery && <button onClick={() => setSearchQuery('')} className="text-xs text-memoir-400 hover:text-memoir-600">Clear</button>}
-        </div>
-      )}
+      <div className="px-3 py-2 bg-white border-b border-memoir-100 flex items-center gap-2">
+        <Search size={17} className="text-amber-500 shrink-0" />
+        <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Search conversation" className="min-w-0 flex-1 bg-transparent text-sm placeholder:text-memoir-300 focus:outline-none" />
+        {searchQuery && (
+          <>
+            <span className="text-xs tabular-nums text-memoir-400 whitespace-nowrap">{searchMatches.length ? `${activeMatch + 1} of ${searchMatches.length}` : '0 results'}</span>
+            <button onClick={() => moveMatch(-1)} disabled={!searchMatches.length} className="p-1.5 rounded-full hover:bg-memoir-50 disabled:opacity-30" aria-label="Previous result"><ChevronUp size={18} /></button>
+            <button onClick={() => moveMatch(1)} disabled={!searchMatches.length} className="p-1.5 rounded-full hover:bg-memoir-50 disabled:opacity-30" aria-label="Next result"><ChevronDown size={18} /></button>
+            <button onClick={clearSearch} className="p-1.5 rounded-full hover:bg-memoir-50" aria-label="Close search"><X size={17} /></button>
+          </>
+        )}
+      </div>
 
-      {activeTab === 'chat' ? (
+      {true ? (
         <div ref={listRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-4 space-y-2" style={{ backgroundColor: 'var(--bg-primary)' }}>
           {hasMore && !searchQuery && (
             <div className="text-center py-2">
-              <button onClick={() => setVisibleCount(c => Math.min(c + PAGE_SIZE, filteredMessages.length))} className="text-xs text-memoir-400 hover:text-memoir-600 bg-white px-3 py-1 rounded-full border border-memoir-100">Load {Math.min(PAGE_SIZE, filteredMessages.length - visibleMessages.length)} earlier • {filteredMessages.length - visibleMessages.length} left</button>
+              <button onClick={() => setVisibleCount(c => Math.min(c + PAGE_SIZE, allMessages.length))} className="text-xs text-memoir-400 hover:text-memoir-600 bg-white px-3 py-1 rounded-full border border-memoir-100">Load {Math.min(PAGE_SIZE, allMessages.length - visibleMessages.length)} earlier • {allMessages.length - visibleMessages.length} left</button>
             </div>
           )}
-          {filteredMessages.length === 0 ? (
+          {visibleMessages.length === 0 ? (
             <div className="text-center py-12"><p className="text-memoir-400">{searchQuery ? `No results for "${searchQuery}"` : 'No messages'}</p></div>
           ) : (
             visibleMessages.map((msg, i) => (
-              <div key={msg.id} className={cx('flex', msg.isMine ? 'justify-end' : 'justify-start')}>
+              <div
+                key={msg.id}
+                ref={node => { if (node) messageRefs.current.set(msg.id, node); else messageRefs.current.delete(msg.id); }}
+                className={cx('flex scroll-m-24 rounded-xl transition-colors', msg.id === allMessages[targetIndex]?.id && 'bg-amber-100/70 py-1', msg.isMine ? 'justify-end' : 'justify-start')}
+              >
                 <div className={cx('max-w-[80%] px-4 py-2.5 relative group', msg.isMine ? 'chat-bubble-mine' : 'chat-bubble-other')}>
                   {!msg.isMine && visibleMessages[i-1]?.sender !== msg.sender && <p className={cx('text-xs font-medium mb-1', msg.isMine ? 'text-memoir-100' : 'text-memoir-400')}>{msg.sender}</p>}
                   
                   {msg.mediaUrl && !imgErrors.has(msg.id) && (
                     <div className="mb-2 rounded-lg overflow-hidden relative group/img">
-                      <img src={msg.mediaUrl} alt="Media" className="max-w-full rounded-lg cursor-pointer" loading="eager" onError={() => setImgErrors(prev => new Set([...prev, msg.id]))} onClick={() => window.open(msg.mediaUrl, '_blank')} />
+                      <img src={msg.mediaUrl} alt="Media" className="max-w-full rounded-lg cursor-pointer" loading="eager" onError={() => setImgErrors(prev => new Set([...prev, msg.id]))} onClick={() => openMedia(msg.mediaUrl)} />
                       {/* Star button for images */}
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleStar(msg); }}
@@ -202,10 +241,6 @@ export default function ChatView() {
                       </button>
                     </div>
                   )}
-                  {msg.mediaUrl && imgErrors.has(msg.id) && (
-                    <div className="mb-2 p-2 bg-neutral-100 rounded-lg flex items-center gap-1.5 text-[11px] text-neutral-500"><ImageOff size={12} />Image unavailable</div>
-                  )}
-
                   <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                   <p className={cx('text-[10px] mt-1 text-right', msg.isMine ? 'text-white/60' : 'text-memoir-300')}>{formatMessageTime(msg.timestamp)}</p>
                   
@@ -235,7 +270,7 @@ export default function ChatView() {
                 <div key={msg.id} className="aspect-square rounded-xl overflow-hidden bg-memoir-50 cursor-pointer group relative border-2 border-transparent hover:border-memoir-200">
                   {msg.mediaUrl && !imgErrors.has(msg.id) ? (
                     <>
-                      <img src={msg.mediaUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="eager" onError={() => setImgErrors(prev => new Set([...prev, msg.id]))} onClick={() => window.open(msg.mediaUrl, '_blank')} />
+                      <img src={msg.mediaUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="eager" onError={() => setImgErrors(prev => new Set([...prev, msg.id]))} onClick={() => openMedia(msg.mediaUrl)} />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleStar(msg); }}

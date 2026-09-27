@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { StarOff, Eye, Search, Image as ImageIcon, ImageOff, Shield } from 'lucide-react';
+import { StarOff, Eye, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getStarredMessages, saveStarredMessages } from '../lib/storage';
 import { formatMessageTime, getAvatarColor, getAvatarLetter, cx } from '../lib/utils';
@@ -12,7 +12,6 @@ export default function Starred() {
   const [starred, setStarred] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [imgErrors, setImgErrors] = useState(new Set());
 
   useEffect(() => {
     let mounted = true;
@@ -31,9 +30,6 @@ export default function Starred() {
     const q = query.toLowerCase();
     return m.content.toLowerCase().includes(q) || m.sender.toLowerCase().includes(q) || (m.contactName || '').toLowerCase().includes(q);
   });
-
-  const imageStarred = filtered.filter(m => m.mediaUrl);
-  const textStarred = filtered.filter(m => !m.mediaUrl);
 
   const grouped = filtered.reduce((acc, msg) => {
     const key = msg.contactName || 'Unknown';
@@ -60,7 +56,7 @@ export default function Starred() {
     <div className="page-container">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-memoir-800 flex items-center gap-2">Starred <span className="text-[11px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">{starred.length} • {imageStarred.length} images</span></h1>
+          <h1 className="text-2xl font-display font-bold text-memoir-800 flex items-center gap-2">Starred <span className="text-[11px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">{starred.length}</span></h1>
         </div>
         <div className="relative">
           <Search size={16} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-memoir-300" />
@@ -68,30 +64,7 @@ export default function Starred() {
         </div>
       </div>
 
-      {filtered.length > 0 && imageStarred.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-medium text-memoir-700 mb-3 flex items-center gap-2"><ImageIcon size={16} /> Starred Images ({imageStarred.length})</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {imageStarred.map(msg => (
-              <div key={msg.id} className="group relative bg-white rounded-xl overflow-hidden border border-memoir-100 hover:shadow-md transition-all">
-                <div className="aspect-square bg-memoir-50 relative overflow-hidden">
-                  {msg.mediaUrl && !imgErrors.has(msg.id) ? (
-                    <img src={msg.mediaUrl} alt="" className="w-full h-full object-cover" loading="eager" onError={() => setImgErrors(prev => new Set([...prev, msg.id]))} />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-memoir-300"><ImageOff size={24} /><span className="text-[10px]">Expired</span></div>
-                  )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                  <button onClick={() => handleUnstar(msg.messageId)} className="absolute top-1.5 right-1.5 w-7 h-7 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-md border border-white opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500"><StarOff size={14} /></button>
-                </div>
-                <div className="p-2.5">
-                  <p className="text-xs text-memoir-700 truncate">{msg.content || 'Photo'}</p>
-                  <p className="text-[10px] text-memoir-400 truncate">{msg.sender} • {msg.contactName}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {starred.length === 0 ? (
         <div className="text-center py-16">

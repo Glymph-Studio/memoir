@@ -591,7 +591,7 @@ export default function Canvas() {
         </AnimatePresence>
       </div>
 
-      <div className="md:hidden fixed bottom-5 left-4 right-4 h-20 px-2 bg-white rounded-[20px] z-50 flex items-center justify-around shadow-[0_8px_28px_rgba(65,45,35,0.14)] border border-[#eee9e5]">
+      <div className="md:hidden fixed bottom-[max(12px,env(safe-area-inset-bottom))] left-2 right-2 h-[76px] px-1 bg-white rounded-[20px] z-50 grid grid-cols-8 items-center shadow-[0_8px_28px_rgba(65,45,35,0.14)] border border-[#eee9e5]">
         <MobileTool icon={<MessageSquare size={19}/>} label="Moments" active={activePanel==='chatbubble'} onClick={()=>setActivePanel(p=>p==='chatbubble'?null:'chatbubble')} />
         <MobileTool icon={<ImageIcon size={19}/>} label="Photo" onClick={handleAddImage} />
         <MobileTool icon={<Type size={19}/>} label="Text" onClick={handleAddText} />
@@ -750,8 +750,8 @@ function ToolBtn({ icon, label, active, onClick }) {
 }
 function MobileTool({ icon, label, active, onClick }) {
   return (
-    <button onClick={onClick} className={cx('flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl shrink-0 transition-all',active?'bg-neutral-100 text-neutral-700':'text-neutral-400 active:bg-neutral-50')}>
-      {icon}<span className="text-[9px] leading-none font-medium">{label}</span>
+    <button onClick={onClick} aria-label={label} className={cx('w-full min-w-0 h-14 flex flex-col items-center justify-center gap-1 px-0 rounded-xl transition-all',active?'bg-[#f3ece8] text-[#5a382a]':'text-neutral-400 active:bg-neutral-50')}>
+      {icon}<span className="text-[8px] leading-none font-medium truncate max-w-full">{label}</span>
     </button>
   );
 }
