@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Download, Undo, Redo, Type, Image as ImageIcon,
-  StickyNote, Smile, Palette, X, Bold, Italic,
+  StickyNote, Smile, Sparkles, Palette, X, Bold, Italic,
   AlignLeft, AlignCenter, AlignRight, Trash2, RotateCw,
   ZoomIn, ZoomOut, Lock, Unlock, Copy,
   Layers, Calendar, Tag, MessageSquare,
@@ -14,6 +14,7 @@ import { getScrapbooks, saveScrapbooks, getStarredMessages, generateId } from '.
 import { useCanvasHistory } from '../hooks/useCanvasHistory';
 import { useDebouncedPersist } from '../hooks/useDebouncedPersist';
 import { CanvasElement, BUBBLE_PRESETS } from '../components/canvas/CanvasElement';
+import DoodleIcon, { DOODLES } from '../components/canvas/DoodleIcon';
 import { cx } from '../lib/utils';
 
 const THEMES = {
@@ -68,6 +69,24 @@ const FONTS = [
   { value: 'monospace', label: 'Type' },
 ];
 
+const COMPOSER_FONTS = [
+  { value: "'Caveat', cursive", label: 'Handwritten' },
+  { value: "'Dancing Script', cursive", label: 'Script' },
+  { value: "'Playfair Display', serif", label: 'Journal' },
+  { value: 'monospace', label: 'Typewriter' },
+  { value: 'Georgia, serif', label: 'Vintage' },
+];
+
+const NOTE_PAPERS = [
+  { name: 'Butter', bg: '#fff0a6', border: '#d8ba42' },
+  { name: 'Blush', bg: '#f8d7e1', border: '#e7a9bb' },
+  { name: 'Sky', bg: '#d8e7fa', border: '#a9c7ea' },
+  { name: 'Sage', bg: '#cdf3df', border: '#9cd7b8' },
+  { name: 'Peach', bg: '#f9dfcc', border: '#e8b998' },
+];
+
+const INK_COLORS = ['#4a1f0c', '#8a1c62', '#1e3561', '#1f5b38', '#a3421b', '#374151', '#cc1455', '#3d32aa'];
+
 export default function Canvas() {
   const { scrapbookId } = useParams();
   const navigate = useNavigate();
@@ -84,6 +103,12 @@ export default function Canvas() {
   const [saveStatus, setSaveStatus] = useState('saved');
   const [loadError, setLoadError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
+  const [composerType, setComposerType] = useState(null);
+  const [composerText, setComposerText] = useState('');
+  const [composerFont, setComposerFont] = useState(COMPOSER_FONTS[0].value);
+  const [composerInk, setComposerInk] = useState(INK_COLORS[0]);
+  const [composerPaper, setComposerPaper] = useState(NOTE_PAPERS[0]);
   const [viewport, setViewport] = useState(() => ({
     width: typeof window === 'undefined' ? 390 : window.innerWidth,
     height: typeof window === 'undefined' ? 844 : window.innerHeight,
@@ -226,6 +251,37 @@ export default function Canvas() {
     setShowProps(false);
     return newEl;
   }, [elements, getNextZ, pushHistory, immediatePersist]);
+
+  const openComposer = useCallback((type) => {
+    setComposerType(type);
+    setComposerText('');
+    setComposerFont(COMPOSER_FONTS[0].value);
+    setComposerInk(INK_COLORS[0]);
+    setComposerPaper(NOTE_PAPERS[0]);
+  }, []);
+
+  const submitComposer = useCallback(() => {
+    const content = composerText.trim();
+    if (!content) return;
+    if (composerType === 'note') {
+      addElement({
+        type: 'note', content, fontFamily: composerFont, fontSize: 20,
+        color: composerInk, noteBg: composerPaper.bg, noteBorder: composerPaper.border,
+        w: 190, h: 180,
+      });
+    } else {
+      addElement({
+        type: 'text', content, fontFamily: composerFont, fontSize: 24,
+        color: composerInk, w: 240, h: 90,
+      });
+    }
+    setComposerType(null);
+  }, [addElement, composerFont, composerInk, composerPaper, composerText, composerType]);
+
+  const handleAddDoodle = useCallback((name) => {
+    addElement({ type: 'doodle', doodleName: name, color: '#4a342a', w: 88, h: 88 });
+    setActivePanel(null);
+  }, [addElement]);
 
   const updateElementImmediate = useCallback((id, updates) => {
     setElements(prev => {
@@ -504,6 +560,7 @@ export default function Canvas() {
   const isMobile = viewport.width < 768;
   const canvasWidth = isMobile ? Math.max(320, viewport.width - 36) : 800;
   const canvasHeight = isMobile ? Math.max(520, viewport.height - 168) : 600;
+  const previewScale = Math.min((viewport.width - 48) / canvasWidth, (viewport.height - 120) / canvasHeight, 1);
 
   return (
     <div className="h-[100dvh] flex flex-col bg-neutral-100 overflow-hidden select-none">
@@ -516,7 +573,7 @@ export default function Canvas() {
         </div>
         <div className="flex items-center gap-1 text-[#8d827c]">
           <button onClick={handleExport} className="w-11 h-11 flex items-center justify-center" aria-label="Download"><Download size={20} /></button>
-          <button onClick={() => setSelectedId(null)} className="w-11 h-11 flex items-center justify-center" aria-label="Preview"><Eye size={20} /></button>
+          <button onClick={() => { setSelectedId(null); setShowPreview(true); }} className="w-11 h-11 flex items-center justify-center" aria-label="Preview"><Eye size={20} /></button>
           <button onClick={() => setActivePanel(p => p === 'theme' ? null : 'theme')} className="w-11 h-11 flex items-center justify-center" aria-label="Theme"><Palette size={20} /></button>
           <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="ml-1 h-11 px-4 rounded-full bg-[#4a2f24] text-white text-sm font-semibold flex items-center gap-1.5"><Check size={15} />Done</button>
         </div>
@@ -540,11 +597,12 @@ export default function Canvas() {
 
       <div className="flex flex-1 overflow-hidden relative">
         <div className="hidden md:flex w-[56px] bg-white border-r border-neutral-200 flex-col items-center py-2 gap-0.5 shrink-0 z-40">
-          <ToolBtn icon={<Type size={17}/>} label="Text" onClick={handleAddText} />
+          <ToolBtn icon={<Type size={17}/>} label="Text" onClick={() => openComposer('text')} />
           <ToolBtn icon={<ImageIcon size={17}/>} label="Photo" onClick={handleAddImage} />
           <ToolBtn icon={<MessageSquare size={17}/>} label="Moments" active={activePanel==='chatbubble'} onClick={()=>setActivePanel(p=>p==='chatbubble'?null:'chatbubble')} />
-          <ToolBtn icon={<StickyNote size={17}/>} label="Notes" active={activePanel==='note'} onClick={()=>setActivePanel(p=>p==='note'?null:'note')} />
+          <ToolBtn icon={<StickyNote size={17}/>} label="Notes" onClick={() => openComposer('note')} />
           <ToolBtn icon={<Smile size={17}/>} label="Sticker" active={activePanel==='sticker'} onClick={()=>setActivePanel(p=>p==='sticker'?null:'sticker')} />
+          <ToolBtn icon={<Sparkles size={17}/>} label="Doodle" active={activePanel==='doodle'} onClick={()=>setActivePanel(p=>p==='doodle'?null:'doodle')} />
           <ToolBtn icon={<Calendar size={17}/>} label="Date" onClick={handleAddDateStamp} />
           <ToolBtn icon={<Tag size={17}/>} label="Washi" active={activePanel==='washi'} onClick={()=>setActivePanel(p=>p==='washi'?null:'washi')} />
           <div className="border-t border-neutral-100 my-1 w-7" />
@@ -583,12 +641,13 @@ export default function Canvas() {
         </AnimatePresence>
       </div>
 
-      <div className="md:hidden fixed bottom-[max(12px,env(safe-area-inset-bottom))] left-2 right-2 h-[76px] px-1 bg-white rounded-[20px] z-50 grid grid-cols-8 items-center shadow-[0_8px_28px_rgba(65,45,35,0.14)] border border-[#eee9e5]">
+      <div className="md:hidden fixed bottom-[max(12px,env(safe-area-inset-bottom))] left-2 right-2 h-[76px] px-1 bg-white rounded-[20px] z-50 flex items-center overflow-x-auto overscroll-x-contain shadow-[0_8px_28px_rgba(65,45,35,0.14)] border border-[#eee9e5] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <MobileTool icon={<MessageSquare size={19}/>} label="Moments" active={activePanel==='chatbubble'} onClick={()=>setActivePanel(p=>p==='chatbubble'?null:'chatbubble')} />
         <MobileTool icon={<ImageIcon size={19}/>} label="Photo" onClick={handleAddImage} />
-        <MobileTool icon={<Type size={19}/>} label="Text" onClick={handleAddText} />
-        <MobileTool icon={<StickyNote size={19}/>} label="Note" active={activePanel==='note'} onClick={()=>setActivePanel(p=>p==='note'?null:'note')} />
+        <MobileTool icon={<Type size={19}/>} label="Text" onClick={() => openComposer('text')} />
+        <MobileTool icon={<StickyNote size={19}/>} label="Note" onClick={() => openComposer('note')} />
         <MobileTool icon={<Smile size={19}/>} label="Sticker" active={activePanel==='sticker'} onClick={()=>setActivePanel(p=>p==='sticker'?null:'sticker')} />
+        <MobileTool icon={<Sparkles size={19}/>} label="Doodle" active={activePanel==='doodle'} onClick={()=>setActivePanel(p=>p==='doodle'?null:'doodle')} />
         <MobileTool icon={<Tag size={19}/>} label="Washi" active={activePanel==='washi'} onClick={()=>setActivePanel(p=>p==='washi'?null:'washi')} />
         <MobileTool icon={<Calendar size={19}/>} label="Stamp" onClick={handleAddDateStamp} />
         <MobileTool icon={<Undo size={19}/>} label="Undo" onClick={undo} />
@@ -602,6 +661,58 @@ export default function Canvas() {
               <button onClick={()=>setActivePanel(null)} className="p-1 rounded hover:bg-neutral-100"><X size={14} className="text-neutral-400"/></button>
             </div>
             <div className="overflow-y-auto p-3 h-[calc(100%-40px)]">{renderPanelContent()}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {composerType && (
+          <motion.div className="fixed inset-0 z-[80] bg-black/30 flex items-end md:items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onMouseDown={(event) => { if (event.target === event.currentTarget) setComposerType(null); }}>
+            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 50, opacity: 0 }} className="w-full md:max-w-xl max-h-[88dvh] overflow-y-auto bg-white rounded-t-[28px] md:rounded-[28px] p-6 md:p-7 shadow-2xl">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-xl font-semibold text-[#34231c]">Add {composerType === 'note' ? 'Note' : 'Text'}</h2>
+                <button onClick={() => setComposerType(null)} className="w-11 h-11 flex items-center justify-center rounded-full text-[#8c766b] hover:bg-[#f7f1ed]" aria-label="Close"><X size={22} /></button>
+              </div>
+              <label className="text-sm text-[#8c766b]">Font style</label>
+              <div className="flex gap-2 overflow-x-auto py-2 mb-4 [scrollbar-width:thin]">
+                {COMPOSER_FONTS.map(font => (
+                  <button key={font.label} onClick={() => setComposerFont(font.value)} className={cx('shrink-0 px-4 h-11 rounded-2xl border text-base', composerFont === font.value ? 'border-[#4a2f24] bg-[#faf6f2]' : 'border-[#e4d9d2]')} style={{ fontFamily: font.value }}>{font.label}</button>
+                ))}
+              </div>
+              <textarea value={composerText} onChange={event => setComposerText(event.target.value)} placeholder={composerType === 'note' ? 'Write your note...' : 'Write something...'} autoFocus className="w-full h-32 rounded-2xl bg-[#efedeb] p-4 outline-none resize-none placeholder:text-[#9f8b82]" style={{ fontFamily: composerFont, color: composerInk, fontSize: 20 }} />
+              {composerType === 'note' ? (
+                <div className="mt-6">
+                  <p className="text-sm text-[#8c766b] mb-3">Paper colour</p>
+                  <div className="flex gap-3 overflow-x-auto pb-2">
+                    {NOTE_PAPERS.map(paper => <button key={paper.name} onClick={() => setComposerPaper(paper)} className="shrink-0 flex flex-col items-center gap-1.5 text-xs text-[#806d63]"><span className={cx('w-11 h-11 rounded-2xl border-2', composerPaper.name === paper.name ? 'border-[#3e2a22]' : 'border-transparent')} style={{ backgroundColor: paper.bg }} />{paper.name}</button>)}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6">
+                  <p className="text-sm text-[#8c766b] mb-3">Ink colour</p>
+                  <div className="flex gap-3 overflow-x-auto pb-2">
+                    {INK_COLORS.map(color => <button key={color} onClick={() => setComposerInk(color)} aria-label={`Ink ${color}`} className={cx('w-10 h-10 rounded-full shrink-0 border-2', composerInk === color ? 'border-[#3e2a22] ring-2 ring-white' : 'border-transparent')} style={{ backgroundColor: color }} />)}
+                  </div>
+                </div>
+              )}
+              <button onClick={submitComposer} disabled={!composerText.trim()} className="mt-6 w-full h-14 rounded-2xl bg-[#4a2f24] text-white font-semibold disabled:bg-[#bdb3ae]">Add to Canvas</button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showPreview && (
+          <motion.div className="fixed inset-0 z-[90] bg-black/80 flex flex-col items-center justify-center p-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <button onClick={() => setShowPreview(false)} className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/20 text-white flex items-center justify-center" aria-label="Close preview"><X size={24} /></button>
+            <div className="relative" style={{ width: canvasWidth * previewScale, height: canvasHeight * previewScale }}>
+              <div className="absolute left-0 top-0 overflow-hidden rounded-[20px] shadow-2xl" style={{ width: canvasWidth, height: canvasHeight, backgroundColor: theme.bg, transform: `scale(${previewScale})`, transformOrigin: 'top left' }}>
+                <div className="absolute inset-0 pointer-events-none canvas-bg" />
+                {elements.map(element => <CanvasElement key={element.id} element={element} isSelected={false} isEditing={false} onUpdate={() => {}} onStopEditing={() => {}} />)}
+                {elements.length === 0 && <div className="absolute inset-0 flex items-center justify-center text-[#8b7d75]/45 italic font-display text-2xl">Empty canvas</div>}
+              </div>
+            </div>
+            <p className="mt-4 text-white/70 font-display italic">{scrapbook.title}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -671,6 +782,18 @@ export default function Canvas() {
   );
 
   function renderPanelContent() {
+    if (activePanel === 'doodle') return (
+      <div>
+        <div className="grid grid-cols-3 md:grid-cols-2 gap-2">
+          {DOODLES.map(([name, label]) => (
+            <button key={name} onClick={() => handleAddDoodle(name)} className="min-h-24 rounded-xl flex flex-col items-center justify-center gap-2 text-[#4a342a] hover:bg-[#f8f3ef] active:scale-95 transition-all">
+              <DoodleIcon name={name} size={40} />
+              <span className="text-xs">{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    );
     if (activePanel === 'note') return (
       <div>
         <p className="text-xs text-neutral-400 mb-2">Pick a color</p>
@@ -742,7 +865,7 @@ function ToolBtn({ icon, label, active, onClick }) {
 }
 function MobileTool({ icon, label, active, onClick }) {
   return (
-    <button onClick={onClick} aria-label={label} className={cx('w-full min-w-0 h-14 flex flex-col items-center justify-center gap-1 px-0 rounded-xl transition-all',active?'bg-[#f3ece8] text-[#5a382a]':'text-neutral-400 active:bg-neutral-50')}>
+    <button onClick={onClick} aria-label={label} className={cx('w-[52px] min-w-[52px] h-14 flex flex-col items-center justify-center gap-1 px-0 rounded-xl transition-all',active?'bg-[#f3ece8] text-[#5a382a]':'text-neutral-400 active:bg-neutral-50')}>
       {icon}<span className="text-[8px] leading-none font-medium truncate max-w-full">{label}</span>
     </button>
   );

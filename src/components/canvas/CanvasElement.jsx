@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { RotateCw, ImageOff } from 'lucide-react';
 import { cx } from '../../lib/utils';
+import DoodleIcon from './DoodleIcon';
 
 const BUBBLE_PRESETS = {
   whatsapp: { mineBg: '#d9fdd3', otherBg: '#ffffff', mineColor: '#1a1a1a', otherColor: '#1a1a1a', radius: '12px', mineTail: true, otherTail: true, shadow: '0 1px 1px rgba(0,0,0,0.06)', border: 'none', timeInside: true },
@@ -83,10 +84,10 @@ function CanvasElementInner({ element: el, isSelected, isEditing, onPointerDown,
             {isEditing ? (
               <textarea ref={textRef} value={editContent} onChange={e => setEditContent(e.target.value)} onBlur={stopEdit} onKeyDown={handleKeyDown}
                 className="w-full h-full bg-transparent border-none outline-none resize-none"
-                style={{ fontFamily: "'Caveat', cursive", fontSize: `${el.fontSize || 20}px`, lineHeight: 1.6, color: el.color || '#333' }}
+                style={{ fontFamily: el.fontFamily || "'Caveat', cursive", fontSize: `${el.fontSize || 20}px`, lineHeight: 1.6, color: el.color || '#333' }}
                 onMouseDown={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onClick={e => e.stopPropagation()} />
             ) : (
-              <p className="whitespace-pre-wrap break-words" style={{ fontFamily: "'Caveat', cursive", fontSize: `${el.fontSize || 20}px`, lineHeight: 1.6, color: el.color || '#333' }}>
+              <p className="whitespace-pre-wrap break-words" style={{ fontFamily: el.fontFamily || "'Caveat', cursive", fontSize: `${el.fontSize || 20}px`, lineHeight: 1.6, color: el.color || '#333' }}>
                 {el.content || 'Tap to write...'}
               </p>
             )}
@@ -96,6 +97,12 @@ function CanvasElementInner({ element: el, isSelected, isEditing, onPointerDown,
         );
       case 'sticker':
         return <div className="w-full h-full flex items-center justify-center select-none" style={{ fontSize: `${Math.min(el.w, el.h) * 0.7}px` }}>{el.content}</div>;
+      case 'doodle':
+        return (
+          <div className="w-full h-full flex items-center justify-center" style={{ color: el.color || '#4a342a' }}>
+            <DoodleIcon name={el.doodleName} size={Math.max(24, Math.min(el.w, el.h) * 0.82)} strokeWidth={1.7} />
+          </div>
+        );
       case 'washi':
         return <div className="w-full h-full rounded-sm" style={{ background: el.washiBg, backgroundSize: el.washiBgSize || 'auto', opacity: 0.85, borderRadius: '2px' }} />;
       case 'datestamp':
