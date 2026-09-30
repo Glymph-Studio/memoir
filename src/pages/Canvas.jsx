@@ -507,18 +507,18 @@ export default function Canvas() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-neutral-100 overflow-hidden select-none">
-      <header className="md:hidden h-[74px] px-4 bg-white border-b border-neutral-100 z-50 shrink-0 flex items-center justify-between">
+      <header className="md:hidden h-[76px] px-4 bg-white border-b border-neutral-100 z-50 shrink-0 flex items-center justify-between">
         <div className="flex items-center min-w-0">
-          <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="p-2 -ml-2 text-[#7b706a]" aria-label="Back">
+          <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="w-11 h-11 -ml-2 flex items-center justify-center text-[#7b706a]" aria-label="Back">
             <ArrowLeft size={22} />
           </button>
           <h1 className="ml-2 font-display italic font-semibold text-[#34231c] truncate max-w-[150px]">{scrapbook.title}</h1>
         </div>
         <div className="flex items-center gap-1 text-[#8d827c]">
-          <button onClick={handleExport} className="p-2" aria-label="Download"><Download size={20} /></button>
-          <button onClick={() => setSelectedId(null)} className="p-2" aria-label="Preview"><Eye size={20} /></button>
-          <button onClick={() => setActivePanel(p => p === 'theme' ? null : 'theme')} className="p-2" aria-label="Theme"><Palette size={20} /></button>
-          <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="ml-1 h-10 px-4 rounded-full bg-[#4a2f24] text-white text-sm font-semibold flex items-center gap-1.5"><Check size={15} />Done</button>
+          <button onClick={handleExport} className="w-11 h-11 flex items-center justify-center" aria-label="Download"><Download size={20} /></button>
+          <button onClick={() => setSelectedId(null)} className="w-11 h-11 flex items-center justify-center" aria-label="Preview"><Eye size={20} /></button>
+          <button onClick={() => setActivePanel(p => p === 'theme' ? null : 'theme')} className="w-11 h-11 flex items-center justify-center" aria-label="Theme"><Palette size={20} /></button>
+          <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="ml-1 h-11 px-4 rounded-full bg-[#4a2f24] text-white text-sm font-semibold flex items-center gap-1.5"><Check size={15} />Done</button>
         </div>
       </header>
 

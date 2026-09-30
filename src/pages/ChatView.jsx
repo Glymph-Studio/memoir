@@ -46,6 +46,7 @@ export default function ChatView() {
   const [loading, setLoading] = useState(true);
   const [imgErrors, setImgErrors] = useState(new Set());
   const [starring, setStarring] = useState(null);
+  const [activeMessageId, setActiveMessageId] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -103,7 +104,11 @@ export default function ChatView() {
   useEffect(() => {
     if (!searchQuery.trim() || !Number.isInteger(targetIndex)) return;
     requestAnimationFrame(() => {
-      messageRefs.current.get(allMessages[targetIndex]?.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const list = listRef.current;
+      const target = messageRefs.current.get(allMessages[targetIndex]?.id);
+      if (!list || !target) return;
+      const top = target.offsetTop - list.clientHeight / 2 + target.clientHeight / 2;
+      list.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     });
   }, [targetIndex, searchQuery, allMessages]);
 
@@ -172,7 +177,7 @@ export default function ChatView() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-4rem)] items-center justify-center">
+      <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100dvh-4rem)] items-center justify-center">
         <div className="w-6 h-6 border-2 border-memoir-200 border-t-memoir-500 rounded-full animate-spin mb-3" />
         <p className="text-sm text-memoir-400">Loading messages...</p>
         <p className="text-xs text-emerald-600 mt-1">🔒 Privacy: memory-only • Images starrable</p>
@@ -183,7 +188,7 @@ export default function ChatView() {
   if (!chat) return null;
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)]">
+    <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100dvh-4rem)]">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-memoir-100 bg-white/80 backdrop-blur-lg sticky top-16 z-30">
         <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-xl hover:bg-memoir-50 transition-colors">
           <ArrowLeft size={20} className="text-memoir-600" />
@@ -201,9 +206,9 @@ export default function ChatView() {
         {searchQuery && (
           <>
             <span className="text-xs tabular-nums text-memoir-400 whitespace-nowrap">{searchMatches.length ? `${activeMatch + 1} of ${searchMatches.length}` : '0 results'}</span>
-            <button onClick={() => moveMatch(-1)} disabled={!searchMatches.length} className="p-1.5 rounded-full hover:bg-memoir-50 disabled:opacity-30" aria-label="Previous result"><ChevronUp size={18} /></button>
-            <button onClick={() => moveMatch(1)} disabled={!searchMatches.length} className="p-1.5 rounded-full hover:bg-memoir-50 disabled:opacity-30" aria-label="Next result"><ChevronDown size={18} /></button>
-            <button onClick={clearSearch} className="p-1.5 rounded-full hover:bg-memoir-50" aria-label="Close search"><X size={17} /></button>
+            <button onClick={() => moveMatch(-1)} disabled={!searchMatches.length} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-memoir-50 disabled:opacity-30" aria-label="Previous result"><ChevronUp size={18} /></button>
+            <button onClick={() => moveMatch(1)} disabled={!searchMatches.length} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-memoir-50 disabled:opacity-30" aria-label="Next result"><ChevronDown size={18} /></button>
+            <button onClick={clearSearch} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-memoir-50" aria-label="Close search"><X size={17} /></button>
           </>
         )}
       </div>
@@ -224,7 +229,7 @@ export default function ChatView() {
                 ref={node => { if (node) messageRefs.current.set(msg.id, node); else messageRefs.current.delete(msg.id); }}
                 className={cx('flex scroll-m-24 rounded-xl transition-colors', msg.id === allMessages[targetIndex]?.id && 'bg-amber-100/70 py-1', msg.isMine ? 'justify-end' : 'justify-start')}
               >
-                <div className={cx('max-w-[80%] px-4 py-2.5 relative group', msg.isMine ? 'chat-bubble-mine' : 'chat-bubble-other')}>
+                <div onClick={() => setActiveMessageId(current => current === msg.id ? null : msg.id)} className={cx('max-w-[80%] px-4 py-2.5 relative group', msg.isMine ? 'chat-bubble-mine' : 'chat-bubble-other')}>
                   {!msg.isMine && visibleMessages[i-1]?.sender !== msg.sender && <p className={cx('text-xs font-medium mb-1', msg.isMine ? 'text-memoir-100' : 'text-memoir-400')}>{msg.sender}</p>}
                   
                   {msg.mediaUrl && !imgErrors.has(msg.id) && (
@@ -242,7 +247,7 @@ export default function ChatView() {
                   <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                   <p className={cx('text-[10px] mt-1 text-right', msg.isMine ? 'text-white/60' : 'text-memoir-300')}>{formatMessageTime(msg.timestamp)}</p>
                   
-                  <button onClick={() => toggleStar(msg)} className={cx('absolute -right-2 -top-2 w-7 h-7 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 bg-white shadow-md border border-memoir-100', starredIds.has(msg.id) && 'opacity-100 text-amber-400', starring === msg.id && 'opacity-100')}>
+                  <button aria-label={starredIds.has(msg.id) ? 'Unstar message' : 'Star message'} onClick={(event) => { event.stopPropagation(); toggleStar(msg); }} className={cx('absolute -right-2 -top-2 w-9 h-9 md:w-7 md:h-7 rounded-full flex items-center justify-center opacity-0 pointer-events-none md:pointer-events-auto md:group-hover:opacity-100 transition-all duration-200 bg-white shadow-md border border-memoir-100', (activeMessageId === msg.id || starredIds.has(msg.id) || starring === msg.id) && 'opacity-100 pointer-events-auto text-amber-400')}>
                     {starring === msg.id ? <div className="w-3 h-3 border-2 border-amber-200 border-t-amber-500 rounded-full animate-spin" /> : <Star size={14} className={starredIds.has(msg.id) ? 'fill-amber-400 text-amber-400' : 'text-memoir-300'} />}
                   </button>
                 </div>

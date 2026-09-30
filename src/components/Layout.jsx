@@ -40,14 +40,14 @@ export default function Layout({ children }) {
 
           <div className="flex items-center gap-3">
             <span className="text-sm text-memoir-400 hidden sm:block">{user?.name || user?.email}</span>
-            <button onClick={handleLogout} className="p-2 rounded-xl text-memoir-400 hover:text-memoir-600 hover:bg-memoir-50 transition-colors" title="Log out">
+            <button onClick={handleLogout} className="w-11 h-11 flex items-center justify-center rounded-xl text-memoir-400 hover:text-memoir-600 hover:bg-memoir-50 transition-colors" title="Log out">
               <LogOut size={18} />
             </button>
           </div>
         </div>
       </header>
 
-      <main className="flex-1 pb-20 md:pb-6">{children}</main>
+      <main className="flex-1 pb-16 md:pb-0">{children}</main>
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-lg border-t border-memoir-100">
         <div className="flex items-center justify-around h-16">

@@ -68,7 +68,7 @@ export default function Login() {
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" />
                 <input type={showPassword ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} className="input-field pl-10 pr-10" autoComplete="current-password" required autoFocus={locked} />
-                <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-memoir-300" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-memoir-300" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>
             <button type="submit" className="btn-primary w-full" disabled={submitting}>{submitting ? 'Unlocking...' : locked ? 'Unlock' : 'Sign In'}</button>
