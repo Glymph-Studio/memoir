@@ -97,6 +97,15 @@ function CanvasElementInner({ element: el, isSelected, isEditing, onPointerDown,
         );
       case 'sticker':
         return <div className="w-full h-full flex items-center justify-center select-none" style={{ fontSize: `${Math.min(el.w, el.h) * 0.7}px` }}>{el.content}</div>;
+      case 'svg-sticker':
+        return imgError ? (
+          <div className="w-full h-full flex flex-col items-center justify-center rounded-xl bg-neutral-100 text-neutral-400">
+            <ImageOff size={20} />
+            <span className="mt-1 px-1 text-center text-[10px]">Sticker file missing</span>
+          </div>
+        ) : (
+          <img src={el.src} alt={el.name ? `${el.name} sticker` : 'Illustrated sticker'} className="w-full h-full object-contain pointer-events-none select-none" draggable={false} loading="eager" onError={() => setImgError(true)} />
+        );
       case 'doodle':
         return (
           <div className="w-full h-full flex items-center justify-center" style={{ color: el.color || '#4a342a' }}>

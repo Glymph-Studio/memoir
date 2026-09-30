@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="4" result="o"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.28"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#sh)">
+    <g transform="translate(256 256)">
+      <!-- white die-cut base (stroke creates the border) -->
+      <g fill="#ffffff" stroke="#ffffff" stroke-width="12" stroke-linejoin="round" stroke-linecap="round">
+
+          <g transform="rotate(-15)">
+            <rect x="-180" y="-28" width="360" height="56" fill="#f5c5c5" stroke="#c88383" stroke-width="3"/>
+            <!-- stripes -->
+            <g stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.8">
+              <line x1="-170" y1="-10" x2="-130" y2="-10"/>
+              <line x1="-110" y1="-10" x2="-70" y2="-10"/>
+              <line x1="-50" y1="-10" x2="-10" y2="-10"/>
+              <line x1="10" y1="-10" x2="50" y2="-10"/>
+              <line x1="70" y1="-10" x2="110" y2="-10"/>
+              <line x1="130" y1="-10" x2="170" y2="-10"/>
+            </g>
+            <!-- dashed edges for torn-paper look -->
+            <path d="M -180 -28 l 6 0 l 0 4 l -6 0 M -180 28 l 6 0 l 0 -4 l -6 0" fill="#c88383" opacity="0.5"/>
+            <!-- little hearts -->
+            <g fill="#d94f4f">
+              <path d="M -140 0 c -3 -5 -10 -5 -10 2 c 0 6 10 10 10 10 s 10 -4 10 -10 c 0 -7 -7 -7 -10 -2 z"/>
+              <path d="M 0 0 c -3 -5 -10 -5 -10 2 c 0 6 10 10 10 10 s 10 -4 10 -10 c 0 -7 -7 -7 -10 -2 z"/>
+              <path d="M 140 0 c -3 -5 -10 -5 -10 2 c 0 6 10 10 10 10 s 10 -4 10 -10 c 0 -7 -7 -7 -10 -2 z"/>
+            </g>
+          </g>
+
+      </g>
+      <!-- colored art -->
+      <g>
+
+          <g transform="rotate(-15)">
+            <rect x="-180" y="-28" width="360" height="56" fill="#f5c5c5" stroke="#c88383" stroke-width="3"/>
+            <!-- stripes -->
+            <g stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.8">
+              <line x1="-170" y1="-10" x2="-130" y2="-10"/>
+              <line x1="-110" y1="-10" x2="-70" y2="-10"/>
+              <line x1="-50" y1="-10" x2="-10" y2="-10"/>
+              <line x1="10" y1="-10" x2="50" y2="-10"/>
+              <line x1="70" y1="-10" x2="110" y2="-10"/>
+              <line x1="130" y1="-10" x2="170" y2="-10"/>
+            </g>
+            <!-- dashed edges for torn-paper look -->
+            <path d="M -180 -28 l 6 0 l 0 4 l -6 0 M -180 28 l 6 0 l 0 -4 l -6 0" fill="#c88383" opacity="0.5"/>
+            <!-- little hearts -->
+            <g fill="#d94f4f">
+              <path d="M -140 0 c -3 -5 -10 -5 -10 2 c 0 6 10 10 10 10 s 10 -4 10 -10 c 0 -7 -7 -7 -10 -2 z"/>
+              <path d="M 0 0 c -3 -5 -10 -5 -10 2 c 0 6 10 10 10 10 s 10 -4 10 -10 c 0 -7 -7 -7 -10 -2 z"/>
+              <path d="M 140 0 c -3 -5 -10 -5 -10 2 c 0 6 10 10 10 10 s 10 -4 10 -10 c 0 -7 -7 -7 -10 -2 z"/>
+            </g>
+          </g>
+
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="4" result="o"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.28"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#sh)">
+    <g transform="translate(256 256)">
+      <!-- white die-cut base (stroke creates the border) -->
+      <g fill="#ffffff" stroke="#ffffff" stroke-width="18" stroke-linejoin="round" stroke-linecap="round">
+
+          <g fill="#ffffff" stroke="#e7dfd0" stroke-width="4">
+            <ellipse cx="0" cy="-78" rx="22" ry="46"/>
+            <ellipse cx="0" cy="78" rx="22" ry="46"/>
+            <ellipse cx="-78" cy="0" rx="46" ry="22"/>
+            <ellipse cx="78" cy="0" rx="46" ry="22"/>
+            <ellipse cx="-55" cy="-55" rx="20" ry="42" transform="rotate(-45 -55 -55)"/>
+            <ellipse cx="55" cy="-55" rx="20" ry="42" transform="rotate(45 55 -55)"/>
+            <ellipse cx="-55" cy="55" rx="20" ry="42" transform="rotate(45 -55 55)"/>
+            <ellipse cx="55" cy="55" rx="20" ry="42" transform="rotate(-45 55 55)"/>
+          </g>
+          <circle cx="0" cy="0" r="36" fill="#f5c876" stroke="#c98f2f" stroke-width="4"/>
+          <circle cx="-10" cy="-6" r="4" fill="#76543d"/>
+          <circle cx="10" cy="-6" r="4" fill="#76543d"/>
+          <path d="M -8 8 Q 0 16 8 8" fill="none" stroke="#76543d" stroke-width="3" stroke-linecap="round"/>
+
+      </g>
+      <!-- colored art -->
+      <g>
+
+          <g fill="#ffffff" stroke="#e7dfd0" stroke-width="4">
+            <ellipse cx="0" cy="-78" rx="22" ry="46"/>
+            <ellipse cx="0" cy="78" rx="22" ry="46"/>
+            <ellipse cx="-78" cy="0" rx="46" ry="22"/>
+            <ellipse cx="78" cy="0" rx="46" ry="22"/>
+            <ellipse cx="-55" cy="-55" rx="20" ry="42" transform="rotate(-45 -55 -55)"/>
+            <ellipse cx="55" cy="-55" rx="20" ry="42" transform="rotate(45 55 -55)"/>
+            <ellipse cx="-55" cy="55" rx="20" ry="42" transform="rotate(45 -55 55)"/>
+            <ellipse cx="55" cy="55" rx="20" ry="42" transform="rotate(-45 55 55)"/>
+          </g>
+          <circle cx="0" cy="0" r="36" fill="#f5c876" stroke="#c98f2f" stroke-width="4"/>
+          <circle cx="-10" cy="-6" r="4" fill="#76543d"/>
+          <circle cx="10" cy="-6" r="4" fill="#76543d"/>
+          <path d="M -8 8 Q 0 16 8 8" fill="none" stroke="#76543d" stroke-width="3" stroke-linecap="round"/>
+
+      </g>
+    </g>
+  </g>
+</svg>

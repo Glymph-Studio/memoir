@@ -28,6 +28,39 @@ const THEMES = {
   sky: { bg: '#d8e8f0', label: 'Sky', emoji: '☁️' },
 };
 
+const ILLUSTRATED_STICKERS = [
+  ['01-polaroid', 'Polaroid'],
+  ['02-coffee', 'Coffee'],
+  ['03-paper-plane', 'Paper plane'],
+  ['04-heart', 'Heart'],
+  ['05-star', 'Star'],
+  ['06-cloud', 'Cloud'],
+  ['07-rainbow', 'Rainbow'],
+  ['08-sun', 'Sun'],
+  ['09-moon', 'Moon'],
+  ['10-daisy', 'Daisy'],
+  ['11-leaf', 'Leaf'],
+  ['12-camera', 'Camera'],
+  ['13-love-letter', 'Love letter'],
+  ['14-balloon', 'Balloon'],
+  ['15-music-note', 'Music note'],
+  ['16-cupcake', 'Cupcake'],
+  ['17-book', 'Book'],
+  ['18-mushroom', 'Mushroom'],
+  ['19-butterfly', 'Butterfly'],
+  ['20-strawberry', 'Strawberry'],
+  ['21-bicycle', 'Bicycle'],
+  ['22-ticket', 'Ticket'],
+  ['23-smiley', 'Smiley'],
+  ['24-bouquet', 'Bouquet'],
+  ['25-cherries', 'Cherries'],
+  ['26-speech-bubble', 'Speech bubble'],
+  ['27-saturn', 'Saturn'],
+  ['28-vinyl', 'Vinyl'],
+  ['29-arrow', 'Arrow'],
+  ['30-washi-tape', 'Washi tape'],
+].map(([file, name]) => ({ name, src: `/stickers/${file}.svg` }));
+
 const STICKER_CATEGORIES = {
   'Smileys': ['😊','😂','🥰','😎','🤩','😍','🥳','😇','🤗','🤭','😋','🤓','😏','🥺','😤','🫠'],
   'Hearts':  ['❤️','💕','💖','💗','💝','💘','💔','🩷','🧡','💛','💚','💙','💜','🖤','🤍','🫶'],
@@ -462,6 +495,10 @@ export default function Canvas() {
 
   const handleAddNote = useCallback((c) => { addElement({ type: 'note', content: '', noteBg: c.bg, noteBorder: c.border, fontFamily: "'Caveat', cursive", fontSize: 20, color: '#333', w: 170, h: 170 }); setActivePanel(null); }, [addElement]);
   const handleAddSticker = useCallback((emoji) => { addElement({ type: 'sticker', content: emoji, w: 64, h: 64 }); setActivePanel(null); }, [addElement]);
+  const handleAddIllustratedSticker = useCallback((sticker) => {
+    addElement({ type: 'svg-sticker', src: sticker.src, name: sticker.name, w: 110, h: 110 });
+    setActivePanel(null);
+  }, [addElement]);
   const handleAddWashi = useCallback((tape) => { addElement({ type: 'washi', washiBg: tape.bg, washiBgSize: tape.bgSize, w: 220, h: 22 }); setActivePanel(null); }, [addElement]);
   const handleAddDateStamp = useCallback(() => { addElement({ type: 'datestamp', content: new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }), fontFamily: "'Playfair Display', serif", fontSize: 16, color: '#555', w: 240, h: 48 }); setActivePanel(null); }, [addElement]);
 
@@ -836,10 +873,25 @@ export default function Canvas() {
       </div>
     );
     if (activePanel === 'sticker') return (
-      <div className="space-y-3">
-        {Object.entries(STICKER_CATEGORIES).map(([cat, emojis]) => (
-          <div key={cat}><h4 className="text-[10px] font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">{cat}</h4><div className="grid grid-cols-6 gap-0.5">{emojis.map((e,i)=><button key={i} onClick={()=>handleAddSticker(e)} className="text-2xl p-1.5 rounded-lg hover:bg-neutral-50 hover:scale-125 active:scale-90 transition-all">{e}</button>)}</div></div>
-        ))}
+      <div className="space-y-4">
+        <div>
+          <h4 className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-2">Illustrated</h4>
+          <div className="grid grid-cols-4 md:grid-cols-3 gap-2">
+            {ILLUSTRATED_STICKERS.map(sticker => (
+              <button key={sticker.src} type="button" onClick={() => handleAddIllustratedSticker(sticker)} aria-label={`Add ${sticker.name} sticker`} title={sticker.name} className="aspect-square min-h-14 rounded-xl border border-neutral-100 bg-white p-2 hover:border-neutral-300 hover:bg-neutral-50 active:scale-95 transition-all">
+                <img src={sticker.src} alt="" className="w-full h-full object-contain pointer-events-none" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="border-t border-neutral-100 pt-3">
+          <h4 className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wider mb-2">Emoji</h4>
+          <div className="space-y-3">
+            {Object.entries(STICKER_CATEGORIES).map(([cat, emojis]) => (
+              <div key={cat}><h5 className="text-[10px] font-semibold text-neutral-300 uppercase tracking-wider mb-1.5">{cat}</h5><div className="grid grid-cols-6 gap-0.5">{emojis.map((emoji, index) => <button key={`${cat}-${index}`} type="button" onClick={() => handleAddSticker(emoji)} aria-label={`Add ${emoji} sticker`} className="text-2xl p-1.5 rounded-lg hover:bg-neutral-50 hover:scale-125 active:scale-90 transition-all">{emoji}</button>)}</div></div>
+            ))}
+          </div>
+        </div>
       </div>
     );
     if (activePanel === 'chatbubble') return (

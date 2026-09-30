@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="4" result="o"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.28"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#sh)">
+    <g transform="translate(256 256)">
+      <!-- white die-cut base (stroke creates the border) -->
+      <g fill="#ffffff" stroke="#ffffff" stroke-width="18" stroke-linejoin="round" stroke-linecap="round">
+
+          <rect x="-120" y="-140" width="240" height="280" rx="8" fill="#ffffff" stroke="#e7dfd0" stroke-width="4"/>
+          <rect x="-100" y="-120" width="200" height="180" rx="3" fill="#d6e6ef"/>
+          <circle cx="50" cy="-85" r="18" fill="#f5c876"/>
+          <path d="M-100 20 Q -60 -30 -10 -5 Q 40 -40 100 -5 L100 60 L-100 60 Z" fill="#9fbf9f"/>
+          <path d="M-100 40 Q -60 10 -10 25 Q 40 0 100 20 L100 60 L-100 60 Z" fill="#7ea87f"/>
+          <path d="M-72 -92 c -8 -14 -28 -14 -28 4 c 0 16 28 28 28 28 s 28 -12 28 -28 c 0 -18 -20 -18 -28 -4 z" fill="#e87a5d"/>
+          <text x="0" y="105" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="22" fill="#76543d">memories</text>
+
+      </g>
+      <!-- colored art -->
+      <g>
+
+          <rect x="-120" y="-140" width="240" height="280" rx="8" fill="#ffffff" stroke="#e7dfd0" stroke-width="4"/>
+          <rect x="-100" y="-120" width="200" height="180" rx="3" fill="#d6e6ef"/>
+          <circle cx="50" cy="-85" r="18" fill="#f5c876"/>
+          <path d="M-100 20 Q -60 -30 -10 -5 Q 40 -40 100 -5 L100 60 L-100 60 Z" fill="#9fbf9f"/>
+          <path d="M-100 40 Q -60 10 -10 25 Q 40 0 100 20 L100 60 L-100 60 Z" fill="#7ea87f"/>
+          <path d="M-72 -92 c -8 -14 -28 -14 -28 4 c 0 16 28 28 28 28 s 28 -12 28 -28 c 0 -18 -20 -18 -28 -4 z" fill="#e87a5d"/>
+          <text x="0" y="105" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="22" fill="#76543d">memories</text>
+
+      </g>
+    </g>
+  </g>
+</svg>

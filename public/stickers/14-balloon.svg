@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="4" result="o"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.28"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#sh)">
+    <g transform="translate(256 256)">
+      <!-- white die-cut base (stroke creates the border) -->
+      <g fill="#ffffff" stroke="#ffffff" stroke-width="18" stroke-linejoin="round" stroke-linecap="round">
+
+          <ellipse cx="0" cy="-30" rx="75" ry="95" fill="#e87a5d" stroke="#b84a35" stroke-width="5"/>
+          <path d="M -15 55 L 15 55 L 5 75 L -5 75 Z" fill="#b84a35"/>
+          <path d="M 0 75 Q 20 110 -10 140 Q 20 170 -5 190" fill="none" stroke="#76543d" stroke-width="3" stroke-linecap="round"/>
+          <ellipse cx="-25" cy="-55" rx="14" ry="22" fill="#ffffff" opacity="0.45"/>
+
+      </g>
+      <!-- colored art -->
+      <g>
+
+          <ellipse cx="0" cy="-30" rx="75" ry="95" fill="#e87a5d" stroke="#b84a35" stroke-width="5"/>
+          <path d="M -15 55 L 15 55 L 5 75 L -5 75 Z" fill="#b84a35"/>
+          <path d="M 0 75 Q 20 110 -10 140 Q 20 170 -5 190" fill="none" stroke="#76543d" stroke-width="3" stroke-linecap="round"/>
+          <ellipse cx="-25" cy="-55" rx="14" ry="22" fill="#ffffff" opacity="0.45"/>
+
+      </g>
+    </g>
+  </g>
+</svg>

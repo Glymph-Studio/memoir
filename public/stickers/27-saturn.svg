@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="4" result="o"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.28"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#sh)">
+    <g transform="translate(256 256)">
+      <!-- white die-cut base (stroke creates the border) -->
+      <g fill="#ffffff" stroke="#ffffff" stroke-width="18" stroke-linejoin="round" stroke-linecap="round">
+
+          <ellipse cx="0" cy="0" rx="160" ry="30" fill="none" stroke="#c98f2f" stroke-width="10"/>
+          <circle cx="0" cy="0" r="75" fill="#f5c876" stroke="#c98f2f" stroke-width="5"/>
+          <!-- planet stripes -->
+          <path d="M -70 -15 Q 0 -5 70 -15" stroke="#e0a94f" stroke-width="5" fill="none"/>
+          <path d="M -70 10 Q 0 22 70 10" stroke="#e0a94f" stroke-width="5" fill="none"/>
+          <path d="M -65 30 Q 0 40 65 30" stroke="#e0a94f" stroke-width="4" fill="none"/>
+          <!-- ring in front -->
+          <path d="M -120 15 Q 0 55 120 15" fill="none" stroke="#c98f2f" stroke-width="10"/>
+          <circle cx="-25" cy="-15" r="4" fill="#b84a35"/>
+
+      </g>
+      <!-- colored art -->
+      <g>
+
+          <ellipse cx="0" cy="0" rx="160" ry="30" fill="none" stroke="#c98f2f" stroke-width="10"/>
+          <circle cx="0" cy="0" r="75" fill="#f5c876" stroke="#c98f2f" stroke-width="5"/>
+          <!-- planet stripes -->
+          <path d="M -70 -15 Q 0 -5 70 -15" stroke="#e0a94f" stroke-width="5" fill="none"/>
+          <path d="M -70 10 Q 0 22 70 10" stroke="#e0a94f" stroke-width="5" fill="none"/>
+          <path d="M -65 30 Q 0 40 65 30" stroke="#e0a94f" stroke-width="4" fill="none"/>
+          <!-- ring in front -->
+          <path d="M -120 15 Q 0 55 120 15" fill="none" stroke="#c98f2f" stroke-width="10"/>
+          <circle cx="-25" cy="-15" r="4" fill="#b84a35"/>
+
+      </g>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="5"/>
+      <feOffset dx="0" dy="4" result="o"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.28"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#sh)">
+    <g transform="translate(256 256)">
+      <!-- white die-cut base (stroke creates the border) -->
+      <g fill="#ffffff" stroke="#ffffff" stroke-width="18" stroke-linejoin="round" stroke-linecap="round">
+
+          <!-- wrapping paper -->
+          <path d="M -70 40 L 70 40 L 30 140 L -30 140 Z" fill="#f5c5c5" stroke="#c88383" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M -70 40 L 0 60 L 70 40" fill="none" stroke="#c88383" stroke-width="4" stroke-linecap="round"/>
+          <!-- ribbon -->
+          <path d="M -35 120 L 35 120 L 45 150 L -45 150 Z" fill="#e8a5a5" stroke="#b76e7c" stroke-width="3"/>
+          <!-- stems -->
+          <path d="M -30 40 Q -40 -10 -55 -60" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M 0 40 Q 5 -10 0 -80" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M 30 40 Q 40 -10 55 -50" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M -15 40 Q -25 -20 -30 -80" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M 15 40 Q 25 -20 30 -70" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <!-- blooms -->
+          <circle cx="-55" cy="-60" r="22" fill="#e87a5d" stroke="#b84a35" stroke-width="3"/>
+          <circle cx="0" cy="-80" r="24" fill="#f5c876" stroke="#c98f2f" stroke-width="3"/>
+          <circle cx="55" cy="-50" r="20" fill="#cfbde0" stroke="#7e5e9e" stroke-width="3"/>
+          <circle cx="-30" cy="-80" r="18" fill="#e8a5a5" stroke="#b76e7c" stroke-width="3"/>
+          <circle cx="30" cy="-70" r="19" fill="#ffffff" stroke="#c4a882" stroke-width="3"/>
+          <!-- leaves -->
+          <path d="M -25 -10 Q -50 0 -40 20 Q -15 15 -25 -10 Z" fill="#9fbf9f" stroke="#5a7a4a" stroke-width="3"/>
+          <path d="M 25 -5 Q 50 5 40 25 Q 15 20 25 -5 Z" fill="#9fbf9f" stroke="#5a7a4a" stroke-width="3"/>
+
+      </g>
+      <!-- colored art -->
+      <g>
+
+          <!-- wrapping paper -->
+          <path d="M -70 40 L 70 40 L 30 140 L -30 140 Z" fill="#f5c5c5" stroke="#c88383" stroke-width="5" stroke-linejoin="round"/>
+          <path d="M -70 40 L 0 60 L 70 40" fill="none" stroke="#c88383" stroke-width="4" stroke-linecap="round"/>
+          <!-- ribbon -->
+          <path d="M -35 120 L 35 120 L 45 150 L -45 150 Z" fill="#e8a5a5" stroke="#b76e7c" stroke-width="3"/>
+          <!-- stems -->
+          <path d="M -30 40 Q -40 -10 -55 -60" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M 0 40 Q 5 -10 0 -80" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M 30 40 Q 40 -10 55 -50" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M -15 40 Q -25 -20 -30 -80" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <path d="M 15 40 Q 25 -20 30 -70" stroke="#5a7a4a" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <!-- blooms -->
+          <circle cx="-55" cy="-60" r="22" fill="#e87a5d" stroke="#b84a35" stroke-width="3"/>
+          <circle cx="0" cy="-80" r="24" fill="#f5c876" stroke="#c98f2f" stroke-width="3"/>
+          <circle cx="55" cy="-50" r="20" fill="#cfbde0" stroke="#7e5e9e" stroke-width="3"/>
+          <circle cx="-30" cy="-80" r="18" fill="#e8a5a5" stroke="#b76e7c" stroke-width="3"/>
+          <circle cx="30" cy="-70" r="19" fill="#ffffff" stroke="#c4a882" stroke-width="3"/>
+          <!-- leaves -->
+          <path d="M -25 -10 Q -50 0 -40 20 Q -15 15 -25 -10 Z" fill="#9fbf9f" stroke="#5a7a4a" stroke-width="3"/>
+          <path d="M 25 -5 Q 50 5 40 25 Q 15 20 25 -5 Z" fill="#9fbf9f" stroke="#5a7a4a" stroke-width="3"/>
+
+      </g>
+    </g>
+  </g>
+</svg>
