@@ -28,14 +28,19 @@ export default function ForgotPassword() {
 
   const sendEmail = async event => {
     event.preventDefault();
-    setBusy(true); setError('');
-    try { await requestPasswordReset(email); setSent(true); }
+    const normalizedEmail = email.trim().toLowerCase();
+    setError('');
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) { setError('Enter a valid email address.'); return; }
+    setBusy(true);
+    try { await requestPasswordReset(normalizedEmail); setSent(true); }
     catch (err) { setError(err.message); }
     finally { setBusy(false); }
   };
 
   const finishRecovery = async event => {
     event.preventDefault();
+    setError('');
+    if (!phrase.trim()) { setError('Enter your recovery phrase.'); return; }
     if (newPassword.length < 10) { setError('Use at least 10 characters for your new password.'); return; }
     setBusy(true); setError('');
     try { await recoverWithPhrase(phrase, newPassword); navigate('/'); }
@@ -53,19 +58,19 @@ export default function ForgotPassword() {
         {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
 
         {recoveryMode ? (
-          <form onSubmit={finishRecovery} className="space-y-4">
+          <form onSubmit={finishRecovery} noValidate className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-memoir-600 mb-1">Recovery phrase</label>
-              <div className="relative"><KeyRound size={18} className="absolute left-3 top-3 text-memoir-300" /><textarea value={phrase} onChange={event => setPhrase(event.target.value)} className="input-field pl-10 min-h-24 resize-none" autoComplete="off" required /></div>
+              <label htmlFor="recovery-phrase" className="block text-sm font-medium text-memoir-600 mb-1">Recovery phrase</label>
+              <div className="relative"><KeyRound size={18} className="absolute left-3 top-3 text-memoir-300" /><textarea id="recovery-phrase" value={phrase} onChange={event => setPhrase(event.target.value)} className="input-field pl-10 min-h-24 resize-none" autoComplete="off" /></div>
             </div>
-            <div><label className="block text-sm font-medium text-memoir-600 mb-1">New password</label><input type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} className="input-field" autoComplete="new-password" required /></div>
+            <div><label htmlFor="new-password" className="block text-sm font-medium text-memoir-600 mb-1">New password</label><input id="new-password" type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} className="input-field" autoComplete="new-password" /></div>
             <button className="btn-primary w-full" disabled={busy}>{busy ? 'Recovering...' : 'Recover and unlock'}</button>
           </form>
         ) : sent ? (
           <div className="p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">Check your email and open the recovery link on this device.</div>
         ) : (
-          <form onSubmit={sendEmail} className="space-y-4">
-            <div><label className="block text-sm font-medium text-memoir-600 mb-1">Email</label><div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="email" value={email} onChange={event => setEmail(event.target.value)} className="input-field pl-10" autoComplete="email" required /></div></div>
+          <form onSubmit={sendEmail} noValidate className="space-y-4">
+            <div><label htmlFor="recovery-email" className="block text-sm font-medium text-memoir-600 mb-1">Email</label><div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input id="recovery-email" type="email" value={email} onChange={event => setEmail(event.target.value)} className="input-field pl-10" autoComplete="email" /></div></div>
             <button className="btn-primary w-full" disabled={busy}>{busy ? 'Sending...' : 'Send recovery link'}</button>
           </form>
         )}

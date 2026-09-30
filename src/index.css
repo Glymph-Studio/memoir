@@ -28,7 +28,31 @@
     background-color: var(--bg-primary);
     color: var(--text-primary);
   }
+
+  :focus-visible {
+    outline: 3px solid #9a4f12;
+    outline-offset: 3px;
+  }
 }
+
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 200;
+  transform: translateY(-200%);
+  background: #ffffff;
+  color: #522b0a;
+  border: 2px solid #522b0a;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+}
+
+.skip-link:focus { transform: translateY(0); }
+.legal-copy a { color: #7c3e0c; text-decoration: underline; font-weight: 600; }
+.legal-copy ul { list-style: disc; padding-left: 1.4rem; }
+.legal-copy li + li { margin-top: 0.45rem; }
 
 @layer components {
   .btn-primary {

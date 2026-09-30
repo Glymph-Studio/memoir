@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Home, Star, BookOpen, LogIn, LogOut } from 'lucide-react';
 import { clearAllUserData } from '../lib/storage';
+import LegalFooter from './LegalFooter';
 
 const navItems = [
   { to: '/', icon: Home, label: 'Chats' },
@@ -27,6 +28,7 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <a href="#main-content" className="skip-link">Skip to content</a>
       <header className="sticky top-0 z-40 backdrop-blur-lg bg-white/80 border-b border-memoir-100">
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -51,7 +53,8 @@ export default function Layout({ children }) {
         </div>
       </header>
 
-      <main className="flex-1 pb-16 md:pb-0">{children}</main>
+      <main id="main-content" className="flex-1 pb-16 md:pb-0">{children}</main>
+      <LegalFooter />
 
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-lg border-t border-memoir-100">
         <div className="flex items-center justify-around h-16">

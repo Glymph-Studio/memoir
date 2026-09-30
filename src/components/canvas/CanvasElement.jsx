@@ -71,7 +71,7 @@ function CanvasElementInner({ element: el, isSelected, isEditing, onPointerDown,
         return (
           <img 
             src={el.src} 
-            alt={el.originalName || ""} 
+            alt={el.originalName ? `Scrapbook image: ${el.originalName}` : "Scrapbook image"} 
             className="w-full h-full object-cover rounded-sm pointer-events-none" 
             draggable={false} 
             loading="eager"
@@ -130,7 +130,7 @@ function CanvasElementInner({ element: el, isSelected, isEditing, onPointerDown,
       <div className="w-full h-full flex flex-col p-2 overflow-hidden">
         {hasMedia && (
           <div className="mb-1.5 rounded-lg overflow-hidden" style={{ maxHeight: '55%' }}>
-            <img src={el.mediaUrl} alt="" className="w-full object-cover rounded-lg" loading="eager" onError={() => setImgError(true)} />
+            <img src={el.mediaUrl} alt={`Shared image from ${el.sender || "chat participant"}`} className="w-full object-cover rounded-lg" loading="eager" onError={() => setImgError(true)} />
           </div>
         )}
         {imgError && el.mediaUrl && (

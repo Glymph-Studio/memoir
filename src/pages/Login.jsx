@@ -64,15 +64,15 @@ export default function Login() {
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             {!locked && (
               <div>
-                <label className="block text-sm font-medium text-memoir-600 mb-1">Email</label>
-                <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="email" value={email} onChange={event => setEmail(event.target.value)} className="input-field pl-10" autoComplete="email" aria-invalid={Boolean(error)} /></div>
+                <label htmlFor="login-email" className="block text-sm font-medium text-memoir-600 mb-1">Email</label>
+                <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input id="login-email" type="email" value={email} onChange={event => setEmail(event.target.value)} className="input-field pl-10" autoComplete="email" aria-invalid={Boolean(error)} /></div>
               </div>
             )}
             <div>
-              <label className="block text-sm font-medium text-memoir-600 mb-1">Password</label>
+              <label htmlFor="login-password" className="block text-sm font-medium text-memoir-600 mb-1">Password</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" />
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} className="input-field pl-10 pr-10" autoComplete="current-password" aria-invalid={Boolean(error)} autoFocus={locked} />
+                <input id="login-password" type={showPassword ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} className="input-field pl-10 pr-10" autoComplete="current-password" aria-invalid={Boolean(error)} autoFocus={locked} />
                 <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-memoir-300" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>

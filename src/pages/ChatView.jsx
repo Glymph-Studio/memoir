@@ -174,13 +174,17 @@ export default function ChatView() {
   };
 
   const mediaMessages = useMemo(() => allMessages.filter(m => m.isMedia || m.mediaUrl), [allMessages]);
+  const currentChatStarredCount = useMemo(
+    () => starredMessages.filter(message => message.chatId === chatId).length,
+    [starredMessages, chatId],
+  );
 
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100dvh-4rem)] items-center justify-center">
         <div className="w-6 h-6 border-2 border-memoir-200 border-t-memoir-500 rounded-full animate-spin mb-3" />
         <p className="text-sm text-memoir-400">Loading messages...</p>
-        <p className="text-xs text-emerald-600 mt-1">🔒 Privacy: memory-only • Images starrable</p>
+        
       </div>
     );
   }
@@ -190,13 +194,13 @@ export default function ChatView() {
   return (
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100dvh-8rem)] md:h-[calc(100dvh-4rem)]">
       <div className="flex items-center gap-3 px-4 py-3 border-b border-memoir-100 bg-white/80 backdrop-blur-lg sticky top-16 z-30">
-        <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-xl hover:bg-memoir-50 transition-colors">
+        <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-xl hover:bg-memoir-50 transition-colors" aria-label="Back to chats">
           <ArrowLeft size={20} className="text-memoir-600" />
         </button>
         <div className={cx('w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold', chat.avatarColor || 'bg-memoir-400')}>{chat.avatarLetter || '?'}</div>
         <div className="flex-1 min-w-0">
           <h2 className="font-medium text-memoir-800 truncate flex items-center gap-1.5">{chat.contactName}</h2>
-          <p className="text-xs text-memoir-400">{allMessages.length} messages  {starredIds.size} starred</p>
+          <p className="text-xs text-memoir-400">{allMessages.length} messages  {currentChatStarredCount} starred</p>
         </div>
       </div>
 
@@ -234,7 +238,7 @@ export default function ChatView() {
                   
                   {msg.mediaUrl && !imgErrors.has(msg.id) && (
                     <div className="mb-2 rounded-lg overflow-hidden relative group/img">
-                      <img src={msg.mediaUrl} alt="Media" className="max-w-full rounded-lg cursor-pointer" loading="eager" onError={() => setImgErrors(prev => new Set([...prev, msg.id]))} onClick={() => openMedia(msg.mediaUrl)} />
+                      <img src={msg.mediaUrl} alt={`Shared image from ${msg.sender || chat.contactName || "chat participant"}`} className="max-w-full rounded-lg cursor-pointer" loading="eager" onError={() => setImgErrors(prev => new Set([...prev, msg.id]))} onClick={() => openMedia(msg.mediaUrl)} />
                       {/* Star button for images */}
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleStar(msg); }}
@@ -273,7 +277,7 @@ export default function ChatView() {
                 <div key={msg.id} className="aspect-square rounded-xl overflow-hidden bg-memoir-50 cursor-pointer group relative border-2 border-transparent hover:border-memoir-200">
                   {msg.mediaUrl && !imgErrors.has(msg.id) ? (
                     <>
-                      <img src={msg.mediaUrl} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="eager" onError={() => setImgErrors(prev => new Set([...prev, msg.id]))} onClick={() => openMedia(msg.mediaUrl)} />
+                      <img src={msg.mediaUrl} alt={`Shared image from ${msg.sender || chat.contactName || "chat participant"}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="eager" onError={() => setImgErrors(prev => new Set([...prev, msg.id]))} onClick={() => openMedia(msg.mediaUrl)} />
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                       <button
                         onClick={(e) => { e.stopPropagation(); toggleStar(msg); }}

@@ -13,6 +13,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [recoveryPhrase, setRecoveryPhrase] = useState('');
   const [copied, setCopied] = useState(false);
+  const [consent, setConsent] = useState(false);
   const { register, continueAsGuest } = useAuth();
   const navigate = useNavigate();
 
@@ -24,6 +25,7 @@ export default function Register() {
     if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) { setError('Enter a valid email address.'); return; }
     if (password.length < 10) { setError('Use at least 10 characters for your password.'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
+    if (!consent) { setError('Confirm that you are 18 or older and agree to the Terms and Privacy Policy.'); return; }
     setLoading(true);
     try {
       const result = await register(name.trim(), normalizedEmail, password);
@@ -66,26 +68,30 @@ export default function Register() {
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-memoir-600 mb-1">Full Name</label>
-              <div className="relative"><User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="text" value={name} onChange={e => setName(e.target.value)} className="input-field pl-10" placeholder="Your name" /></div>
+              <label htmlFor="register-name" className="block text-sm font-medium text-memoir-600 mb-1">Full Name</label>
+              <div className="relative"><User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input id="register-name" type="text" value={name} onChange={e => setName(e.target.value)} className="input-field pl-10" placeholder="Your name" /></div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-memoir-600 mb-1">Email</label>
-              <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field pl-10" placeholder="you@example.com" /></div>
+              <label htmlFor="register-email" className="block text-sm font-medium text-memoir-600 mb-1">Email</label>
+              <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input id="register-email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field pl-10" placeholder="you@example.com" /></div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-memoir-600 mb-1">Password</label>
+              <label htmlFor="register-password" className="block text-sm font-medium text-memoir-600 mb-1">Password</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" />
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} className="input-field pl-10 pr-10" placeholder="••••••••" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-memoir-300 hover:text-memoir-500">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                <input id="register-password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} className="input-field pl-10 pr-10" placeholder="••••••••" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-memoir-300 hover:text-memoir-500" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-memoir-600 mb-1">Confirm Password</label>
-              <div className="relative"><Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="input-field pl-10" placeholder="••••••••" /></div>
+              <label htmlFor="register-confirm" className="block text-sm font-medium text-memoir-600 mb-1">Confirm Password</label>
+              <div className="relative"><Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input id="register-confirm" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="input-field pl-10" placeholder="••••••••" /></div>
             </div>
-            <button type="submit" className="btn-primary w-full" disabled={loading}>{loading ? 'Creating...' : 'Create Account'}</button>
+            <label className="flex items-start gap-3 text-sm text-memoir-600 cursor-pointer">
+              <input type="checkbox" checked={consent} onChange={event => setConsent(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-memoir-600" aria-describedby="account-consent" />
+              <span id="account-consent">I am 18 or older and agree to the <Link to="/terms" className="underline font-medium">Terms and Conditions</Link> and acknowledge the <Link to="/privacy" className="underline font-medium">Privacy Policy</Link>, including processing my account details and encrypted content to provide Memoir.</span>
+            </label>
+            <button type="submit" className="btn-primary w-full" disabled={loading}>{loading ? 'Creating account...' : 'Create account'}</button>
           </form>
 
           <div className="mt-4">

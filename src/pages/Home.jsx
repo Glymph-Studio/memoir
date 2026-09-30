@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Upload, Search, Trash2, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +17,7 @@ export default function Home() {
   const [error, setError] = useState('');
   const [progress, setProgress] = useState(0);
   const [messageResults, setMessageResults] = useState([]);
+  const [importConsent, setImportConsent] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -47,6 +48,11 @@ export default function Home() {
 
   const handleImport = async (e) => {
     const file = e.target.files?.[0];
+    if (!importConsent) {
+      setError('Confirm that you have permission to import this conversation.');
+      if (fileRef.current) fileRef.current.value = '';
+      return;
+    }
     if (!file) return;
     if (file.size > 100 * 1024 * 1024) {
       setError('File too large (max 100MB). Try a smaller export.');
@@ -151,12 +157,16 @@ export default function Home() {
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="relative flex-1">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" />
-          <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search chats..." className="input-field pl-10" />
+          <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search chats..." className="input-field pl-10" aria-label="Search chats and messages" />
         </div>
         <input type="file" accept=".txt,.zip" onChange={handleImport} ref={fileRef} className="hidden" />
         <button onClick={() => fileRef.current?.click()} className="btn-primary flex items-center justify-center gap-2 min-w-[140px]" disabled={importing}><Upload size={18} />{importing ? `${progress}%` : 'Import Chat'}</button>
         <button onClick={createDemoChat} className="btn-secondary flex items-center justify-center gap-2"><Sparkles size={16} />Try Demo</button>
       </div>
+      <label className="flex items-start gap-2 mb-6 text-sm text-memoir-600 cursor-pointer">
+        <input type="checkbox" checked={importConsent} onChange={event => setImportConsent(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-memoir-600" />
+        <span>I have permission to use this conversation and understand it may contain other people’s personal data. See the <Link to="/privacy" className="underline font-medium">Privacy Policy</Link>.</span>
+      </label>
 
       {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
 
@@ -203,7 +213,7 @@ export default function Home() {
                 </div>
                 <p className="text-sm text-memoir-400 truncate mt-1">{chat.lastMessage || 'No messages'}</p>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this chat?')) handleDeleteChat(chat.id); }} className="p-2 text-memoir-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+              <button onClick={(e) => { e.stopPropagation(); if (confirm('Delete this chat?')) handleDeleteChat(chat.id); }} className="p-2 text-memoir-300 hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all" aria-label={`Delete ${chat.contactName} chat`}><Trash2 size={16} /></button>
             </motion.div>
           ))}
         </div>

@@ -137,8 +137,8 @@ export default function Scrapbooks() {
                   {editingId === book.id ? (
                     <div className="flex items-center gap-2" onClick={event => event.stopPropagation()}>
                       <input value={editTitle} onChange={event => setEditTitle(event.target.value)} onKeyDown={event => { if (event.key === 'Enter') saveTitle(book.id); }} className="input-field py-1" autoFocus />
-                      <button onClick={() => saveTitle(book.id)} className="p-1 text-green-600"><Check size={17} /></button>
-                      <button onClick={() => setEditingId(null)} className="p-1 text-neutral-400"><X size={17} /></button>
+                      <button onClick={() => saveTitle(book.id)} className="p-1 text-green-600" aria-label="Save scrapbook name"><Check size={17} /></button>
+                      <button onClick={() => setEditingId(null)} className="p-1 text-neutral-400" aria-label="Cancel renaming"><X size={17} /></button>
                     </div>
                   ) : (
                     <>

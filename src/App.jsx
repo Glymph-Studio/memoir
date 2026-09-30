@@ -11,6 +11,7 @@ import ChatView from './pages/ChatView';
 import Starred from './pages/Starred';
 import Scrapbooks from './pages/Scrapbooks';
 import Canvas from './pages/Canvas';
+import LegalPage from './pages/LegalPage';
 
 const pageVariants = {
   initial: { opacity: 0, y: 12 },
@@ -41,7 +42,8 @@ export default function App() {
     );
   }
 
-  if (locked && location.pathname !== '/forgot-password') {
+  const isPublicLegalPage = ['/privacy', '/terms', '/cookies', '/refunds'].includes(location.pathname);
+  if (locked && location.pathname !== '/forgot-password' && !isPublicLegalPage) {
     return <Login />;
   }
 
@@ -53,6 +55,10 @@ export default function App() {
           <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
           <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
           <Route path="/forgot-password" element={<PageTransition><ForgotPassword /></PageTransition>} />
+          <Route path="/privacy" element={<PageTransition><LegalPage /></PageTransition>} />
+          <Route path="/terms" element={<PageTransition><LegalPage /></PageTransition>} />
+          <Route path="/cookies" element={<PageTransition><LegalPage /></PageTransition>} />
+          <Route path="/refunds" element={<PageTransition><LegalPage /></PageTransition>} />
 
           {/* Public routes - free use, no login required (guest mode) */}
           <Route path="/" element={<Layout><PageTransition><Home /></PageTransition></Layout>} />

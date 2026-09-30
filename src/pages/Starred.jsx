@@ -92,8 +92,8 @@ export default function Starred() {
                         <p className="text-xs text-memoir-300 mt-1">{msg.sender} · {formatMessageTime(msg.timestamp)}</p>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => navigate(`/chat/${msg.chatId}`)} className="p-1.5 rounded-lg hover:bg-memoir-50 text-memoir-400 hover:text-memoir-600"><Eye size={14} /></button>
-                        <button onClick={() => handleUnstar(msg.messageId)} className="p-1.5 rounded-lg hover:bg-red-50 text-memoir-400 hover:text-red-500"><StarOff size={14} /></button>
+                        <button onClick={() => navigate(`/chat/${msg.chatId}`)} aria-label="Open original chat" className="p-1.5 rounded-lg hover:bg-memoir-50 text-memoir-400 hover:text-memoir-600"><Eye size={14} /></button>
+                        <button onClick={() => handleUnstar(msg.messageId)} aria-label="Remove star" className="p-1.5 rounded-lg hover:bg-red-50 text-memoir-400 hover:text-red-500"><StarOff size={14} /></button>
                       </div>
                     </div>
                   </motion.div>

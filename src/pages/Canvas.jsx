@@ -858,7 +858,7 @@ export default function Canvas() {
             {starredMessages.map(msg => (
               <button key={msg.id} onClick={() => handleAddChatBubble(msg)} className="w-full text-left p-2.5 rounded-xl border border-neutral-100 hover:border-neutral-300 hover:bg-neutral-50 transition-all active:scale-[0.98]">
                 <div className="flex flex-col items-end">
-                  {msg.mediaUrl ? <img src={msg.mediaUrl} alt="" className="max-w-[140px] h-20 object-cover rounded-lg mb-1.5" onError={(e)=>{e.target.style.display='none';}}/> : null}
+                  {msg.mediaUrl ? <img src={msg.mediaUrl} alt={`Shared image from ${msg.sender || "chat participant"}`} className="max-w-[140px] h-20 object-cover rounded-lg mb-1.5" onError={(e)=>{e.target.style.display='none';}}/> : null}
                   <div className="inline-block px-3 py-1.5 rounded-2xl rounded-br-sm text-sm" style={{backgroundColor: msg.isMine ? '#d9fdd3' : '#fff', border: msg.isMine ? 'none' : '1px solid #e5e5e5'}}>
                     <p className="text-neutral-700 line-clamp-2 text-[13px]">{msg.content}</p>
                     <p className="text-[10px] text-neutral-400 mt-0.5">{msg.sender}</p>
