@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, KeyRound, Mail } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import AuthLegalLinks from '../components/AuthLegalLinks';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -74,6 +75,7 @@ export default function ForgotPassword() {
             <button className="btn-primary w-full" disabled={busy}>{busy ? 'Sending...' : 'Send recovery link'}</button>
           </form>
         )}
+        <AuthLegalLinks />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, User, UserCheck, Copy, Check } from 'lucide-react';
+import AuthLegalLinks from '../components/AuthLegalLinks';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -47,6 +48,7 @@ export default function Register() {
           <div className="my-5 p-4 rounded-xl bg-memoir-50 border border-memoir-200 font-mono text-sm leading-7 select-all break-words">{recoveryPhrase}</div>
           <button onClick={async () => { await navigator.clipboard.writeText(recoveryPhrase); setCopied(true); }} className="btn-secondary w-full flex items-center justify-center gap-2">{copied ? <Check size={17} /> : <Copy size={17} />}{copied ? 'Copied' : 'Copy phrase'}</button>
           <button onClick={() => navigate('/')} className="btn-primary w-full mt-3">I saved it safely</button>
+          <AuthLegalLinks />
         </div>
       </div>
     );
@@ -102,6 +104,7 @@ export default function Register() {
             <p className="text-sm text-memoir-400">Already have an account? <Link to="/login" className="text-memoir-600 font-medium hover:text-memoir-800">Sign in</Link></p>
             <Link to="/" className="block text-sm text-memoir-400 hover:text-memoir-600 mt-2">Back to Memoir</Link>
           </div>
+          <AuthLegalLinks />
         </div>
       </div>
     </div>

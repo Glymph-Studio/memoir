@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Upload, Search, Trash2, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getChats, saveChats, saveMessages, saveFile, searchAllMessages, generateId } from '../lib/storage';
+import { getChats, saveChats, saveMessages, saveFile, deleteChat, searchAllMessages, generateId } from '../lib/storage';
 import { processChatFile, determineMyMessages } from '../lib/whatsapp-parser';
 import { getAvatarColor, getAvatarLetter, truncate, cx } from '../lib/utils';
 
@@ -108,9 +108,13 @@ export default function Home() {
   };
 
   const handleDeleteChat = async (chatId) => {
-    const updated = chats.filter(c => c.id !== chatId);
-    setChats(updated);
-    await saveChats(user.id, updated);
+    setError('');
+    try {
+      await deleteChat(user.id, chatId);
+      setChats(current => current.filter(chat => chat.id !== chatId));
+    } catch (err) {
+      setError(err.message || 'Could not delete the chat. Please try again.');
+    }
   };
 
   const createDemoChat = async () => {

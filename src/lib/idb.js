@@ -33,6 +33,11 @@ export async function idbSetFile(key, value) {
   return key;
 }
 
+export async function idbRemoveFile(key) {
+  await (await dbPromise).delete('files', key);
+  return true;
+}
+
 export async function clearUserCache(userId) {
   const db = await dbPromise;
   await db.delete('cache', `vault:${userId}`);

@@ -1,4 +1,4 @@
-import { idbGet, idbSet, idbGetFile, idbSetFile, clearUserCache, clearAllIDB } from './idb';
+import { idbGet, idbSet, idbGetFile, idbSetFile, idbRemoveFile, clearUserCache, clearAllIDB } from './idb';
 import { encrypt, decrypt } from './crypto';
 import { supabase } from './supabase';
 
@@ -113,6 +113,19 @@ export async function getChats(userId) {
 export async function saveChats(userId, chats) {
   await ensureReady(userId);
   vault.chats = chats;
+  return queuePersist();
+}
+
+export async function deleteChat(userId, chatId) {
+  await ensureReady(userId);
+  const chatMessages = vault.messages[chatId] || [];
+  const mediaKeys = chatMessages.map(message => message.mediaKey).filter(Boolean);
+  await Promise.allSettled(mediaKeys.map(key => idbRemoveFile(`${userId}:${key}`)));
+  const remainingMessages = { ...vault.messages };
+  delete remainingMessages[chatId];
+  vault.chats = vault.chats.filter(chat => chat.id !== chatId);
+  vault.messages = remainingMessages;
+  vault.starred = vault.starred.filter(message => message.chatId !== chatId);
   return queuePersist();
 }
 

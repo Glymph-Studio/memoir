@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { StarOff, Eye, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getStarredMessages, saveStarredMessages } from '../lib/storage';
+import { getChats, getStarredMessages, saveStarredMessages } from '../lib/storage';
 import { formatMessageTime, getAvatarColor, getAvatarLetter, cx } from '../lib/utils';
 
 export default function Starred() {
@@ -16,9 +16,17 @@ export default function Starred() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      const s = await getStarredMessages(user.id);
+      const [savedStars, chats] = await Promise.all([
+        getStarredMessages(user.id),
+        getChats(user.id),
+      ]);
+      const chatIds = new Set(chats.map(chat => chat.id));
+      const validStars = savedStars.filter(message => chatIds.has(message.chatId));
+      if (validStars.length !== savedStars.length) {
+        await saveStarredMessages(user.id, validStars);
+      }
       if (mounted) {
-        setStarred(s);
+        setStarred(validStars);
         setLoading(false);
       }
     })();

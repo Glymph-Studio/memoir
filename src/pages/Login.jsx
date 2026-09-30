@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, UserCheck, Copy, Check } from 'lucide-react';
+import AuthLegalLinks from '../components/AuthLegalLinks';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -37,15 +38,18 @@ export default function Login() {
   if (recoveryPhrase) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-[#fdf8f0]">
-        <div className="card p-7 w-full max-w-md">
-          <div className="text-4xl mb-4">🔑</div>
-          <h1 className="text-2xl font-display font-bold text-memoir-800">Save your recovery phrase</h1>
-          <p className="text-sm text-memoir-400 mt-2">This is the only way to recover encrypted memories if you forget your password. Keep it somewhere private.</p>
-          <div className="my-5 p-4 rounded-xl bg-memoir-50 border border-memoir-200 font-mono text-sm leading-7 select-all break-words">{recoveryPhrase}</div>
-          <button onClick={async () => { await navigator.clipboard.writeText(recoveryPhrase); setCopied(true); }} className="btn-secondary w-full flex items-center justify-center gap-2">
-            {copied ? <Check size={17} /> : <Copy size={17} />}{copied ? 'Copied' : 'Copy phrase'}
-          </button>
-          <button onClick={() => navigate(destination)} className="btn-primary w-full mt-3">I saved it safely</button>
+        <div className="w-full max-w-md">
+          <div className="card p-7">
+            <div className="text-4xl mb-4">🔑</div>
+            <h1 className="text-2xl font-display font-bold text-memoir-800">Save your recovery phrase</h1>
+            <p className="text-sm text-memoir-400 mt-2">This is the only way to recover encrypted memories if you forget your password. Keep it somewhere private.</p>
+            <div className="my-5 p-4 rounded-xl bg-memoir-50 border border-memoir-200 font-mono text-sm leading-7 select-all break-words">{recoveryPhrase}</div>
+            <button onClick={async () => { await navigator.clipboard.writeText(recoveryPhrase); setCopied(true); }} className="btn-secondary w-full flex items-center justify-center gap-2">
+              {copied ? <Check size={17} /> : <Copy size={17} />}{copied ? 'Copied' : 'Copy phrase'}
+            </button>
+            <button onClick={() => navigate(destination)} className="btn-primary w-full mt-3">I saved it safely</button>
+          </div>
+          <AuthLegalLinks />
         </div>
       </div>
     );
@@ -84,6 +88,7 @@ export default function Login() {
             <button onClick={async () => { await continueAsGuest(); navigate('/'); }} className="text-sm text-memoir-400 inline-flex items-center gap-1.5"><UserCheck size={15} />Continue as Guest</button>
           </div>
         </div>
+        <AuthLegalLinks />
       </div>
     </div>
   );
