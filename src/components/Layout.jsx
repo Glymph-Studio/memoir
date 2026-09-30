@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, Star, BookOpen, LogOut } from 'lucide-react';
+import { Home, Star, BookOpen, LogIn, LogOut } from 'lucide-react';
 import { clearAllUserData } from '../lib/storage';
 
 const navItems = [
@@ -14,6 +14,10 @@ export default function Layout({ children }) {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    if (user?.isGuest) {
+      navigate('/login');
+      return;
+    }
     if (user?.id) {
       try { await clearAllUserData(user.id); } catch {}
     }
@@ -40,8 +44,8 @@ export default function Layout({ children }) {
 
           <div className="flex items-center gap-3">
             <span className="text-sm text-memoir-400 hidden sm:block">{user?.name || user?.email}</span>
-            <button onClick={handleLogout} className="w-11 h-11 flex items-center justify-center rounded-xl text-memoir-400 hover:text-memoir-600 hover:bg-memoir-50 transition-colors" title="Log out">
-              <LogOut size={18} />
+            <button onClick={handleLogout} className="w-11 h-11 flex items-center justify-center rounded-xl text-memoir-400 hover:text-memoir-600 hover:bg-memoir-50 transition-colors" title={user?.isGuest ? 'Sign in' : 'Log out'} aria-label={user?.isGuest ? 'Sign in' : 'Log out'}>
+              {user?.isGuest ? <LogIn size={18} /> : <LogOut size={18} />}
             </button>
           </div>
         </div>

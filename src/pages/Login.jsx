@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, Eye, EyeOff, UserCheck, Copy, Check } from 'lucide-react';
 
@@ -13,15 +13,20 @@ export default function Login() {
   const [copied, setCopied] = useState(false);
   const { login, continueAsGuest, locked, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const destination = locked && location.pathname !== '/login' ? location.pathname : '/';
 
   const handleSubmit = async event => {
     event.preventDefault();
     setError('');
+    const normalizedEmail = String(email || user?.email || '').trim().toLowerCase();
+    if (!normalizedEmail || !/^\S+@\S+\.\S+$/.test(normalizedEmail)) { setError('Enter a valid email address.'); return; }
+    if (!password) { setError('Enter your password.'); return; }
     setSubmitting(true);
     try {
-      const result = await login(email || user?.email, password);
+      const result = await login(normalizedEmail, password);
       if (result.recoveryPhrase) setRecoveryPhrase(result.recoveryPhrase);
-      else navigate('/');
+      else navigate(destination);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -40,7 +45,7 @@ export default function Login() {
           <button onClick={async () => { await navigator.clipboard.writeText(recoveryPhrase); setCopied(true); }} className="btn-secondary w-full flex items-center justify-center gap-2">
             {copied ? <Check size={17} /> : <Copy size={17} />}{copied ? 'Copied' : 'Copy phrase'}
           </button>
-          <button onClick={() => navigate('/')} className="btn-primary w-full mt-3">I saved it safely</button>
+          <button onClick={() => navigate(destination)} className="btn-primary w-full mt-3">I saved it safely</button>
         </div>
       </div>
     );
@@ -56,18 +61,18 @@ export default function Login() {
         </div>
         <div className="card p-7">
           {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             {!locked && (
               <div>
                 <label className="block text-sm font-medium text-memoir-600 mb-1">Email</label>
-                <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="email" value={email} onChange={event => setEmail(event.target.value)} className="input-field pl-10" autoComplete="email" required /></div>
+                <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="email" value={email} onChange={event => setEmail(event.target.value)} className="input-field pl-10" autoComplete="email" aria-invalid={Boolean(error)} /></div>
               </div>
             )}
             <div>
               <label className="block text-sm font-medium text-memoir-600 mb-1">Password</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" />
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} className="input-field pl-10 pr-10" autoComplete="current-password" required autoFocus={locked} />
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} className="input-field pl-10 pr-10" autoComplete="current-password" aria-invalid={Boolean(error)} autoFocus={locked} />
                 <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-memoir-300" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>

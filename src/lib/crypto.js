@@ -76,6 +76,19 @@ export function generateGuestId() {
   return `guest_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export function getOrCreateGuestId() {
+  const key = 'memoir_guest_id';
+  try {
+    const existing = localStorage.getItem(key);
+    if (existing?.startsWith('guest_')) return existing;
+    const created = generateGuestId();
+    localStorage.setItem(key, created);
+    return created;
+  } catch {
+    return generateGuestId();
+  }
+}
+
 export function sanitizeInput(value) {
   return String(value || '').replace(/[<>]/g, '').slice(0, 200);
 }

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import {
-  decrypt, deriveKey, encrypt, generateDataKey, generateGuestId, generateRecoveryPhrase,
+  decrypt, deriveKey, encrypt, generateDataKey, getOrCreateGuestId, generateRecoveryPhrase,
   generateSalt, importDataKey, normalizeRecoveryPhrase, sanitizeInput,
 } from '../lib/crypto';
 import { requireSupabase, supabase } from '../lib/supabase';
@@ -10,7 +10,7 @@ const AuthContext = createContext(null);
 const emptyVault = () => ({ version: 1, chats: [], messages: {}, starred: [], scrapbooks: [], updatedAt: new Date().toISOString() });
 
 function makeGuest() {
-  return { id: generateGuestId(), email: '', name: 'Guest', isGuest: true };
+  return { id: getOrCreateGuestId(), email: '', name: 'Guest', isGuest: true };
 }
 
 function appUser(authUser) {
@@ -73,7 +73,8 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const client = requireSupabase();
-    const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password });
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    const { data: authData, error: authError } = await client.auth.signInWithPassword({ email: normalizedEmail, password });
     if (authError) throw authError;
     const authUser = authData.user;
     const { data: row, error: rowError } = await client.from('user_data').select('*').eq('user_id', authUser.id).maybeSingle();
@@ -137,12 +138,13 @@ export function AuthProvider({ children }) {
   const register = async (name, email, password) => {
     const client = requireSupabase();
     const cleanName = sanitizeInput(name);
+    const normalizedEmail = String(email || '').trim().toLowerCase();
     if (cleanName.length < 2) throw new Error('Name must have at least 2 characters');
     if (password.length < 10) throw new Error('Use at least 10 characters for your password');
 
     const wrapped = await createWrappedKeys(password);
     const { data: authData, error: authError } = await client.auth.signUp({
-      email,
+      email: normalizedEmail,
       password,
       options: { data: { name: cleanName } },
     });
@@ -160,7 +162,7 @@ export function AuthProvider({ children }) {
     if (error) throw error;
 
     await configureStorage(authData.user.id, wrapped.dataKey, wrapped.salt);
-    const nextUser = { id: authData.user.id, email, name: cleanName, isGuest: false };
+    const nextUser = { id: authData.user.id, email: normalizedEmail, name: cleanName, isGuest: false };
     setCryptoKey(wrapped.dataKey);
     setUser(nextUser);
     setLocked(false);
@@ -170,7 +172,7 @@ export function AuthProvider({ children }) {
   const requestPasswordReset = async email => {
     const client = requireSupabase();
     const redirectTo = `${window.location.origin}/forgot-password`;
-    const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
+    const { error } = await client.auth.resetPasswordForEmail(String(email || '').trim().toLowerCase(), { redirectTo });
     if (error) throw error;
   };
 

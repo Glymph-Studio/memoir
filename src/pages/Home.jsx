@@ -108,6 +108,11 @@ export default function Home() {
   };
 
   const createDemoChat = async () => {
+    const existingDemo = chats.find(chat => chat.isDemo);
+    if (existingDemo) {
+      navigate(`/chat/${existingDemo.id}`);
+      return;
+    }
     const demoMessages = [
       { id: generateId(), sender: 'You', content: 'Remember our trip to Goa? 🌊', timestamp: '12/05/23, 10:30 pm', isMine: true, isMedia: false },
       { id: generateId(), sender: 'Priya', content: 'Of course! Best sunset ever 🌅', timestamp: '12/05/23, 10:31 pm', isMine: false, isMedia: false },

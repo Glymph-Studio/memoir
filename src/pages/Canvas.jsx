@@ -101,6 +101,7 @@ export default function Canvas() {
   const [zoom, setZoom] = useState(1);
   const [showProps, setShowProps] = useState(false);
   const [saveStatus, setSaveStatus] = useState('saved');
+  const [toast, setToast] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showPreview, setShowPreview] = useState(false);
@@ -484,14 +485,39 @@ export default function Canvas() {
 
   const handleExport = useCallback(async () => {
     if (!canvasRef.current) return;
-    const prev = selectedId; setSelectedId(null); setEditingId(null);
-    await new Promise(r => setTimeout(r, 150));
+    const previousSelection = selectedId;
+    setToast({ type: 'loading', message: 'Preparing your scrapbook...' });
+    setSelectedId(null);
+    setEditingId(null);
+    await new Promise(resolve => setTimeout(resolve, 150));
     try {
       const html2canvas = (await import('html2canvas')).default;
-      const canvas = await html2canvas(canvasRef.current, { backgroundColor: null, scale: 2, useCORS: true, allowTaint: true, logging: false, ignoreElements: (el) => el.classList?.contains('canvas-ctrl') });
-      const link = document.createElement('a'); link.download = `${scrapbook?.title || 'scrapbook'}.png`; link.href = canvas.toDataURL('image/png'); link.click();
-    } catch (err) { console.error('Export failed:', err); alert('Export failed: ' + err.message); }
-    setSelectedId(prev);
+      const canvas = await html2canvas(canvasRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        ignoreElements: element => element.classList?.contains('canvas-ctrl'),
+      });
+      const blob = await new Promise((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('Could not create image')), 'image/png'));
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `${scrapbook?.title || 'scrapbook'}.png`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setToast({ type: 'success', message: 'Scrapbook downloaded' });
+      setTimeout(() => setToast(null), 2600);
+    } catch (err) {
+      console.error('Export failed:', err);
+      setToast({ type: 'error', message: 'Export failed. Please try again.' });
+      setTimeout(() => setToast(null), 4000);
+    } finally {
+      setSelectedId(previousSelection);
+    }
   }, [selectedId, scrapbook]);
 
   const undo = useCallback(() => { const prev = undoHistory(elements); if (prev) { setElements(prev); immediatePersist(prev); } }, [elements, undoHistory, immediatePersist]);
@@ -564,6 +590,13 @@ export default function Canvas() {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-neutral-100 overflow-hidden select-none">
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} className={cx('fixed top-4 left-1/2 -translate-x-1/2 z-[120] px-4 py-3 rounded-2xl shadow-xl text-sm font-medium', toast.type === 'error' ? 'bg-red-600 text-white' : toast.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-[#4a2f24] text-white')} role="status" aria-live="polite">
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <header className="md:hidden h-[76px] px-4 bg-white border-b border-neutral-100 z-50 shrink-0 flex items-center justify-between">
         <div className="flex items-center min-w-0">
           <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="w-11 h-11 -ml-2 flex items-center justify-center text-[#7b706a]" aria-label="Back">
@@ -583,7 +616,7 @@ export default function Canvas() {
         <div className="flex items-center gap-1.5">
           <button onClick={() => { flushPersist(); navigate('/scrapbooks'); }} className="p-2 rounded-lg hover:bg-neutral-100"><ArrowLeft size={18} className="text-neutral-500" /></button>
           <h2 className="font-semibold text-neutral-800 text-sm truncate max-w-[180px]">{scrapbook.title}</h2>
-          <span className="text-[10px] text-neutral-400">{saveStatus === 'saving' ? 'Saving...' : 'Saved'}</span>
+          <span className="text-[10px] text-neutral-400">{saveStatus === 'saving' ? 'Saving...' : user?.isGuest ? 'Saved on this device' : 'Saved securely'}</span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={undo} disabled={!canUndo} className="p-2 disabled:opacity-20"><Undo size={16} /></button>

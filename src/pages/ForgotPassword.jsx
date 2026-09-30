@@ -18,7 +18,7 @@ export default function ForgotPassword() {
   useEffect(() => {
     let active = true;
     supabase?.auth.getSession().then(({ data }) => {
-      if (active && data.session && (window.location.hash || window.location.search)) setRecoveryMode(true);
+      if (active && data.session?.user) setRecoveryMode(true);
     });
     const { data: listener } = supabase?.auth.onAuthStateChange(event => {
       if (event === 'PASSWORD_RECOVERY') setRecoveryMode(true);

@@ -19,11 +19,14 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (password !== confirmPassword) { setError('Passwords do not match'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    const normalizedEmail = email.trim().toLowerCase();
+    if (name.trim().length < 2) { setError('Enter your name.'); return; }
+    if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) { setError('Enter a valid email address.'); return; }
+    if (password.length < 10) { setError('Use at least 10 characters for your password.'); return; }
+    if (password !== confirmPassword) { setError('Passwords do not match.'); return; }
     setLoading(true);
     try {
-      const result = await register(name, email, password);
+      const result = await register(name.trim(), normalizedEmail, password);
       setRecoveryPhrase(result.recoveryPhrase);
     } catch (err) {
       setError(err.message);
@@ -56,31 +59,31 @@ export default function Register() {
           <p className="text-memoir-400 mt-2">Create your account</p>
         </div>
         <div className="card p-8">
-          <h2 className="text-xl font-semibold text-memoir-800 mb-2">Create account (optional)</h2>
-          <p className="text-sm text-memoir-400 mb-4">Create an account to keep your scrapbooks together.</p>
+          <h2 className="text-xl font-semibold text-memoir-800 mb-2">Keep your memories together</h2>
+          <p className="text-sm text-memoir-400 mb-4">Sync your encrypted scrapbooks across sessions.</p>
 
           {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-memoir-600 mb-1">Full Name</label>
-              <div className="relative"><User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="text" value={name} onChange={e => setName(e.target.value)} className="input-field pl-10" placeholder="Your name" required /></div>
+              <div className="relative"><User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="text" value={name} onChange={e => setName(e.target.value)} className="input-field pl-10" placeholder="Your name" /></div>
             </div>
             <div>
               <label className="block text-sm font-medium text-memoir-600 mb-1">Email</label>
-              <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field pl-10" placeholder="you@example.com" required /></div>
+              <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field pl-10" placeholder="you@example.com" /></div>
             </div>
             <div>
               <label className="block text-sm font-medium text-memoir-600 mb-1">Password</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" />
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} className="input-field pl-10 pr-10" placeholder="••••••••" required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-memoir-300 hover:text-memoir-500">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} className="input-field pl-10 pr-10" placeholder="••••••••" />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center text-memoir-300 hover:text-memoir-500">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-memoir-600 mb-1">Confirm Password</label>
-              <div className="relative"><Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="input-field pl-10" placeholder="••••••••" required /></div>
+              <div className="relative"><Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="input-field pl-10" placeholder="••••••••" /></div>
             </div>
             <button type="submit" className="btn-primary w-full" disabled={loading}>{loading ? 'Creating...' : 'Create Account'}</button>
           </form>
