@@ -1,163 +1,92 @@
-# 📖 Memoir
+# Memoir
 
-**Your memories, beautifully preserved.**
+Memoir turns exported WhatsApp conversations into personal digital scrapbooks.
 
-Memoir is a web application that transforms your WhatsApp chat histories into beautiful, creative scrapbooks. Import your conversations, highlight important moments, and arrange them into digital keepsakes you can export and share.
+You can import a chat, read it in a clean conversation view, star meaningful messages, arrange memories on a scrapbook canvas, and export the result as an image.
 
-![Memoir](https://img.shields.io/badge/Memoir-v1.0-memoir)
+## Features
 
----
+1. Import WhatsApp text and zip exports
+2. View imported conversations
+3. Search chats and messages
+4. Star text and images
+5. Create scrapbooks with notes, text, photos, doodles, stickers, tape, and dates
+6. Move, resize, rotate, and layer canvas elements
+7. Preview and export scrapbooks as PNG files
+8. Use guest mode with local browser storage
+9. Create an account for encrypted synchronization through Supabase
+10. Recover an account with a saved recovery phrase
 
-## ✨ Features
+## Privacy
 
-### 💬 Chat Import
-- Import WhatsApp chat exports (`.txt` and `.zip` files)
-- Parses messages, timestamps, and media from zip archives
-- View conversations with familiar chat bubble styling
-- Media gallery for browsing shared images
+Guest content is stored in the browser on the current device.
 
-### ⭐ Starred Messages
-- Star important messages from any conversation
-- View all starred messages grouped by contact
-- Quickly navigate back to the original chat
+Account vault content is encrypted in the browser before it is stored through Supabase. Imported photo files are not uploaded to Supabase. Users should keep their password and recovery phrase private.
 
-### 📒 Scrapbook Canvas Editor
-A free-form creative canvas with these tools:
-- **Text** — Custom text with font, color, size, weight, style, and alignment options
-- **Photos** — Upload images from your device
-- **Notes** — Colorful sticky notes in 8 colors
-- **Stickers** — Emoji stickers organized by category (Faces, Hearts, Nature, etc.)
-- **Starred Messages** — Drag starred conversations directly onto the canvas
-- **Washi Tape** — Decorative tape elements in 7 colors
-- **Date Stamps** — Stylized date markers
+See the Privacy Policy, Terms and Conditions, Cookie Policy, and Refund Policy inside the application for more information.
 
-### 🎨 Canvas Features
-- **Drag & Drop** — Freely position all elements
-- **Resize** — Corner handles for resizing
-- **Rotate** — Rotate elements to any angle
-- **Layering** — Z-index management, auto-bring-to-front
-- **Undo** — Revert the last action
-- **Themes** — 8 paper-style backgrounds (Cream, Kraft, White, Vintage, Dark, Rose, Sage, Sky)
-- **Export** — Download your scrapbook as a high-quality PNG
+## Requirements
 
-### 🔐 Authentication
-- Register, Login, Forgot Password flows
-- Session management with secure localStorage
+Node.js 18 or newer
 
----
+A Supabase project for account and synchronization features
 
-## 🚀 Getting Started
+## Setup
 
-### Prerequisites
-- Node.js 18+ and npm
-
-### Installation
+1. Clone the repository.
 
 ```bash
-# Clone or download this project
+git clone https://github.com/Glymph-Studio/memoir.git
 cd memoir
+```
 
-# Install dependencies
+2. Install dependencies.
+
+```bash
 npm install
+```
 
-# Start the development server
+3. Copy the environment example.
+
+```bash
+cp .env.example .env
+```
+
+4. Add your Supabase project URL and public publishable key to `.env`.
+
+```env
+VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=YOUR_PUBLISHABLE_ANON_KEY
+```
+
+5. Run `supabase-schema.sql` in the Supabase SQL editor.
+
+6. Start the development server.
+
+```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`
-
-### Build for Production
+## Production build
 
 ```bash
 npm run build
 ```
 
-The production build will be in the `dist/` folder. Deploy it to any static hosting:
-- **Vercel**: `npx vercel --prod`
-- **Netlify**: Drop the `dist/` folder
-- **GitHub Pages**: Use the `dist/` folder
-- **Any web server**: Serve the `dist/` folder
+The production output is created in `dist`.
 
----
+## Technology
 
-## 🏗️ Tech Stack
+Memoir uses React, React Router, Vite, Tailwind CSS, Framer Motion, Lucide, JSZip, html2canvas, IndexedDB, Web Crypto, and Supabase.
 
-| Technology | Purpose |
-|---|---|
-| React 18 | UI framework |
-| React Router DOM v6 | Client-side routing |
-| Vite 5 | Build tool & dev server |
-| Tailwind CSS 3 | Utility-first styling |
-| Framer Motion | Animations & transitions |
-| Lucide React | Icons |
-| html2canvas | Canvas export to PNG |
-| JSZip | Parsing WhatsApp .zip exports |
-| localStorage | Data persistence (swap for any backend) |
+## Security
 
----
+Do not commit `.env`, passwords, recovery phrases, service role keys, private keys, imported chats, or personal photos.
 
-## 📁 Project Structure
+The Supabase publishable key is intended for browser use. Security still depends on Row Level Security policies being configured correctly. Never place a Supabase service role key in this application.
 
-```
-memoir/
-├── index.html
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-├── postcss.config.js
-└── src/
-    ├── main.jsx              # Entry point
-    ├── App.jsx               # Router & layout
-    ├── index.css             # Global styles & Tailwind
-    ├── context/
-    │   └── AuthContext.jsx    # Authentication state
-    ├── lib/
-    │   ├── storage.js        # localStorage abstraction layer
-    │   ├── whatsapp-parser.js # WhatsApp export parser
-    │   └── utils.js          # Utility functions
-    ├── components/
-    │   ├── Layout.jsx        # App shell with nav
-    │   └── ProtectedRoute.jsx # Auth guard
-    └── pages/
-        ├── Login.jsx         # Login page
-        ├── Register.jsx      # Registration page
-        ├── ForgotPassword.jsx # Password reset
-        ├── Home.jsx          # Chat list & import
-        ├── ChatView.jsx      # Conversation view
-        ├── Starred.jsx       # Starred messages
-        ├── Scrapbooks.jsx    # Scrapbook management
-        └── Canvas.jsx        # Canvas editor (main feature)
-```
+If a secret is committed, remove it from the repository and rotate it immediately. Deleting it only from the latest commit is not enough because it remains in Git history.
 
----
+## License
 
-## 🔄 Adding a Real Backend
-
-This MVP uses `localStorage` for data persistence. The `src/lib/storage.js` file serves as an abstraction layer — replace those functions with API calls to connect to any backend:
-
-- **Supabase** — Drop-in PostgreSQL + auth + storage
-- **Firebase** — Google's BaaS with Firestore
-- **Custom API** — Express.js, FastAPI, Django, etc.
-- **Base44** — If you want to go back to Base44 but with your own code
-
-The functions to replace are in `src/lib/storage.js`:
-- `getItem` / `setItem` → API calls
-- `saveFile` / `getFile` → Cloud storage (S3, Supabase Storage, etc.)
-- `getCurrentUser` / `setCurrentUser` → JWT/session management
-
----
-
-## 📱 How to Export WhatsApp Chats
-
-1. Open WhatsApp on your phone
-2. Open the chat you want to export
-3. Tap the three dots → **More** → **Export chat**
-4. Choose **Include media** (for a `.zip`) or **Without media** (for a `.txt`)
-5. Save or share the file
-6. Upload it in Memoir!
-
----
-
-## 📄 License
-
-This project is yours to own and modify freely.
+Memoir is available under the MIT License. See `LICENSE` for the full text.
