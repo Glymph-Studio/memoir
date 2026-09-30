@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, Eye, EyeOff, User, Shield, UserCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, UserCheck, Copy, Check } from 'lucide-react';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -11,6 +11,8 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [recoveryPhrase, setRecoveryPhrase] = useState('');
+  const [copied, setCopied] = useState(false);
   const { register, continueAsGuest } = useAuth();
   const navigate = useNavigate();
 
@@ -21,14 +23,29 @@ export default function Register() {
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     setLoading(true);
     try {
-      await register(name, email, password);
-      navigate('/');
+      const result = await register(name, email, password);
+      setRecoveryPhrase(result.recoveryPhrase);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (recoveryPhrase) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#fdf8f0]">
+        <div className="card p-7 w-full max-w-md">
+          <div className="text-4xl mb-4">🔑</div>
+          <h1 className="text-2xl font-display font-bold text-memoir-800">Save your recovery phrase</h1>
+          <p className="text-sm text-memoir-400 mt-2">You will need this phrase if you forget your password. It cannot be recovered for you.</p>
+          <div className="my-5 p-4 rounded-xl bg-memoir-50 border border-memoir-200 font-mono text-sm leading-7 select-all break-words">{recoveryPhrase}</div>
+          <button onClick={async () => { await navigator.clipboard.writeText(recoveryPhrase); setCopied(true); }} className="btn-secondary w-full flex items-center justify-center gap-2">{copied ? <Check size={17} /> : <Copy size={17} />}{copied ? 'Copied' : 'Copy phrase'}</button>
+          <button onClick={() => navigate('/')} className="btn-primary w-full mt-3">I saved it safely</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--bg-primary)' }}>

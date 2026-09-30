@@ -3,9 +3,15 @@ create table if not exists public.user_data (
   user_id uuid not null references auth.users(id) on delete cascade unique,
   salt text not null,
   encrypted_blob text not null,
+  wrapped_key text,
+  recovery_salt text,
+  recovery_blob text,
   updated_at timestamptz not null default now()
 );
 
+alter table public.user_data add column if not exists wrapped_key text;
+alter table public.user_data add column if not exists recovery_salt text;
+alter table public.user_data add column if not exists recovery_blob text;
 alter table public.user_data enable row level security;
 
 drop policy if exists "Users can read their own data" on public.user_data;

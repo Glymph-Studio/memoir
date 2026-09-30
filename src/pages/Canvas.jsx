@@ -114,14 +114,11 @@ export default function Canvas() {
       try {
         setLoading(true);
         setLoadError(null);
-        console.log('[Canvas] Loading scrapbook', scrapbookId, 'for user', user.id);
         const books = await getScrapbooks(user.id);
-        console.log('[Canvas] Found', books.length, 'scrapbooks');
         const found = books.find(b => b.id === scrapbookId);
         if (!found) {
           if (retries < maxRetries) {
             retries++;
-            console.warn(`[Canvas] Scrapbook not found, retry ${retries}/${maxRetries}`);
             setTimeout(load, 500);
             return;
           }
@@ -143,7 +140,6 @@ export default function Canvas() {
           });
           setElements(validEls);
           maxZRef.current = Math.max(1, ...validEls.map(e => e.zIndex || 0));
-          console.log('[Canvas] Loaded', validEls.length, 'elements');
         } catch (e) {
           console.error('[Canvas] Failed to parse elements', e);
           setElements([]);
@@ -152,7 +148,6 @@ export default function Canvas() {
           const starred = await getStarredMessages(user.id);
           if (mounted) setStarredMessages(starred);
         } catch (e) {
-          console.warn('[Canvas] Failed to load starred', e);
           setStarredMessages([]);
         }
       } catch (e) {
@@ -187,9 +182,7 @@ export default function Canvas() {
         await saveScrapbooks(user.id, books);
         setScrapbook({ ...books[idx] });
         setSaveStatus('saved');
-        console.log('[Canvas] Saved', sanitizedEls.length, 'elements');
       } else {
-        console.warn('[Canvas] Scrapbook not found in persist', scrapbookId);
         setSaveStatus('unsaved');
       }
     } catch (e) {
@@ -399,7 +392,6 @@ export default function Canvas() {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           const compressed = canvas.toDataURL('image/jpeg', 0.8);
-          console.log('[Canvas] Added image', file.name, 'compressed', (compressed.length/1024).toFixed(0), 'KB');
           addElement({ type: 'image', src: compressed, originalName: file.name, w: canvas.width, h: canvas.height });
         };
         img.onerror = () => { console.error('Failed to load image'); alert('Failed to load image'); };

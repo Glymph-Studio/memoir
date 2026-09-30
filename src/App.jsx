@@ -27,7 +27,7 @@ function PageTransition({ children }) {
 }
 
 export default function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, locked } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -39,6 +39,10 @@ export default function App() {
         </div>
       </div>
     );
+  }
+
+  if (locked && location.pathname !== '/forgot-password') {
+    return <Login />;
   }
 
   return (

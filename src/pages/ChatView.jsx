@@ -54,7 +54,6 @@ export default function ChatView() {
         const chats = await getChats(user.id);
         const found = chats.find(c => c.id === chatId);
         if (!found) {
-          console.warn('[ChatView] Chat not found in memory', chatId);
           navigate('/', { state: { privacy: true } });
           return;
         }
@@ -138,7 +137,6 @@ export default function ChatView() {
         let persistentMediaUrl = msg.mediaUrl;
         // If media is blob URL, convert to dataURL for persistence in scrapbook (user explicitly starred = consent)
         if (msg.mediaUrl && msg.mediaUrl.startsWith('blob:')) {
-          console.log('[ChatView] Converting blob to dataURL for starred image');
           const dataUrl = await blobToDataURL(msg.mediaUrl);
           if (dataUrl) persistentMediaUrl = dataUrl;
         }

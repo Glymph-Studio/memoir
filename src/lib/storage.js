@@ -13,6 +13,7 @@ const EMPTY_VAULT = () => ({
 
 let activeUserId = null;
 let activeKey = null;
+let activeSalt = null;
 let vault = EMPTY_VAULT();
 let readyPromise = Promise.resolve();
 let writeQueue = Promise.resolve();
@@ -57,9 +58,10 @@ async function hydrate(userId, key) {
   return vault;
 }
 
-export async function configureStorage(userId, cryptoKey) {
+export async function configureStorage(userId, cryptoKey, salt = null) {
   activeUserId = userId;
   activeKey = cryptoKey || null;
+  activeSalt = salt;
   readyPromise = hydrate(userId, cryptoKey);
   await readyPromise;
 }
@@ -67,6 +69,7 @@ export async function configureStorage(userId, cryptoKey) {
 export function lockStorage() {
   activeUserId = null;
   activeKey = null;
+  activeSalt = null;
   vault = EMPTY_VAULT();
   readyPromise = Promise.resolve();
 }
@@ -86,8 +89,10 @@ async function persist() {
   if (!isGuest(activeUserId)) {
     if (!activeKey) throw new Error('Please sign in again to sync encrypted data');
     const encryptedBlob = await encrypt(activeKey, JSON.stringify(vault));
+    if (!activeSalt) throw new Error('Encryption salt is unavailable. Please sign in again.');
     const { error } = await supabase.from('user_data').upsert({
       user_id: activeUserId,
+      salt: activeSalt,
       encrypted_blob: encryptedBlob,
       updated_at: vault.updatedAt,
     }, { onConflict: 'user_id' });

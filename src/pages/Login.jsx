@@ -1,75 +1,82 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, Eye, EyeOff, Shield, UserCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, UserCheck, Copy, Check } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { login, continueAsGuest } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const [recoveryPhrase, setRecoveryPhrase] = useState('');
+  const [copied, setCopied] = useState(false);
+  const { login, continueAsGuest, locked, user } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async event => {
+    event.preventDefault();
     setError('');
-    setLoading(true);
+    setSubmitting(true);
     try {
-      await login(email, password);
-      navigate('/');
+      const result = await login(email || user?.email, password);
+      if (result.recoveryPhrase) setRecoveryPhrase(result.recoveryPhrase);
+      else navigate('/');
     } catch (err) {
       setError(err.message);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
-  const handleGuest = async () => {
-    await continueAsGuest();
-    navigate('/');
-  };
+  if (recoveryPhrase) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-[#fdf8f0]">
+        <div className="card p-7 w-full max-w-md">
+          <div className="text-4xl mb-4">🔑</div>
+          <h1 className="text-2xl font-display font-bold text-memoir-800">Save your recovery phrase</h1>
+          <p className="text-sm text-memoir-400 mt-2">This is the only way to recover encrypted memories if you forget your password. Keep it somewhere private.</p>
+          <div className="my-5 p-4 rounded-xl bg-memoir-50 border border-memoir-200 font-mono text-sm leading-7 select-all break-words">{recoveryPhrase}</div>
+          <button onClick={async () => { await navigator.clipboard.writeText(recoveryPhrase); setCopied(true); }} className="btn-secondary w-full flex items-center justify-center gap-2">
+            {copied ? <Check size={17} /> : <Copy size={17} />}{copied ? 'Copied' : 'Copy phrase'}
+          </button>
+          <button onClick={() => navigate('/')} className="btn-primary w-full mt-3">I saved it safely</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#fdf8f0]">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">📖</div>
-          <h1 className="text-3xl font-display font-bold text-memoir-800">Memoir</h1>
-          <p className="text-memoir-400 mt-2">Welcome back</p>
+        <div className="text-center mb-7">
+          <div className="text-5xl mb-3">📖</div>
+          <h1 className="text-3xl font-display font-bold text-memoir-800">{locked ? 'Unlock Memoir' : 'Welcome back'}</h1>
+          <p className="text-memoir-400 mt-2">{locked ? 'Enter your password to decrypt your memories.' : 'Sign in to your encrypted collection.'}</p>
         </div>
-
-        <div className="card p-8">
-          <h2 className="text-xl font-semibold text-memoir-800 mb-2">Save your work</h2>
-          <p className="text-sm text-memoir-400 mb-4">Sign in to continue with your saved scrapbooks.</p>
-
+        <div className="card p-7">
           {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
-
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-memoir-600 mb-1">Email</label>
-              <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="email" value={email} onChange={e => setEmail(e.target.value)} className="input-field pl-10" placeholder="you@example.com" required /></div>
-            </div>
+            {!locked && (
+              <div>
+                <label className="block text-sm font-medium text-memoir-600 mb-1">Email</label>
+                <div className="relative"><Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" /><input type="email" value={email} onChange={event => setEmail(event.target.value)} className="input-field pl-10" autoComplete="email" required /></div>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-memoir-600 mb-1">Password</label>
               <div className="relative">
                 <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-memoir-300" />
-                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} className="input-field pl-10 pr-10" placeholder="••••••••" required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-memoir-300 hover:text-memoir-500">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={event => setPassword(event.target.value)} className="input-field pl-10 pr-10" autoComplete="current-password" required autoFocus={locked} />
+                <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-memoir-300" aria-label={showPassword ? 'Hide password' : 'Show password'}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>
               </div>
             </div>
-            <button type="submit" className="btn-primary w-full" disabled={loading}>{loading ? 'Signing in...' : 'Sign In'}</button>
+            <button type="submit" className="btn-primary w-full" disabled={submitting}>{submitting ? 'Unlocking...' : locked ? 'Unlock' : 'Sign In'}</button>
           </form>
-
-          <div className="mt-4">
-            <button onClick={handleGuest} className="btn-secondary w-full flex items-center justify-center gap-2"><UserCheck size={18} />Continue as Guest</button>
-          </div>
-
-          <div className="mt-6 text-center space-y-2">
-            <Link to="/forgot-password" className="text-sm text-memoir-400 hover:text-memoir-600 transition-colors">Forgot password?</Link>
-            <p className="text-sm text-memoir-400">Don't have an account? <Link to="/register" className="text-memoir-600 font-medium hover:text-memoir-800 transition-colors">Sign up</Link></p>
-            <Link to="/" className="block text-sm text-memoir-400 hover:text-memoir-600 mt-2">Back to Memoir</Link>
+          <div className="mt-5 text-center space-y-3">
+            <Link to="/forgot-password" className="block text-sm text-memoir-500">Forgot password?</Link>
+            {!locked && <p className="text-sm text-memoir-400">New here? <Link to="/register" className="text-memoir-700 font-medium">Create account</Link></p>}
+            <button onClick={async () => { await continueAsGuest(); navigate('/'); }} className="text-sm text-memoir-400 inline-flex items-center gap-1.5"><UserCheck size={15} />Continue as Guest</button>
           </div>
         </div>
       </div>
