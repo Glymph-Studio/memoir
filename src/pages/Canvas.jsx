@@ -822,7 +822,8 @@ export default function Canvas() {
                         </div>
                       </>
                     )}
-                    <div className="flex items-center gap-1.5"><span className="text-[11px] text-neutral-400">Opacity</span><input type="range" min={0.1} max={1} step={0.05} value={selectedElement.opacity??1} onChange={e=>updateElementImmediate(selectedId,{opacity:+e.target.value})} className="flex-1 accent-neutral-800"/></div>
+                    <div className="flex items-center gap-1.5"><span className="text-[11px] text-neutral-400">
+                      Opacity</span><input type="range" min={0.1} max={1} step={0.05} value={selectedElement.opacity??1} onChange={e=>updateElementImmediate(selectedId,{opacity:+e.target.value})} className="flex-1 accent-neutral-800"/></div>
                   </div>
                 </motion.div>
               )}
